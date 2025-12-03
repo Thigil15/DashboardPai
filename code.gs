@@ -1,147 +1,179 @@
 /**
- * Google Apps Script - code.gs
- * 
- * Este script expõe os dados de uma planilha Google como JSON
- * para ser consumido pelo dashboard HTML/JS.
- * 
- * INSTRUÇÕES DE USO:
- * 1. Abra sua planilha Google
- * 2. Vá em Extensões > Apps Script
- * 3. Cole este código no editor
- * 4. Clique em "Implantar" > "Nova implantação"
- * 5. Selecione "Aplicativo da Web"
- * 6. Configure:
- *    - Executar como: "Eu"
- *    - Quem pode acessar: "Qualquer pessoa"
- * 7. Copie a URL gerada e cole no arquivo script.js
+ * @fileoverview Backend para servir dados do Google Sheets como API REST JSON.
+ * @author Senior Developer Helper
  */
 
+// =================================================================
+// 1. WEB APP CONTROLLER (API ENDPOINT)
+// =================================================================
+
 /**
- * Função principal que retorna os dados da planilha como JSON
+ * Ponto de entrada para requisições HTTP GET.
+ * Permite filtrar dados via URL Query Parameters.
+ * * Exemplo de uso:
+ * - Todos os dados: https://.../exec
+ * - Aba específica: https://.../exec?sheet=WSEngenhariaEquipe
+ * - Filtro chave/valor: https://.../exec?sheet=WSEngenhariaEquipe&Instituto=ICHC
+ * * @param {Object} e - O objeto de evento contendo parâmetros da requisição.
  */
 function doGet(e) {
+  const params = e.parameter;
+  const response = {
+    status: 'success',
+    timestamp: new Date().toISOString(),
+    data: null
+  };
+
   try {
-    // Obtém a planilha ativa
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = spreadsheet.getActiveSheet();
-    
-    // Obtém todos os dados
-    const data = sheet.getDataRange().getValues();
-    
-    // A primeira linha contém os cabeçalhos
-    const headers = data[0];
-    
-    // Converte os dados para um array de objetos
-    const jsonData = [];
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
-      const rowData = {};
+    // 1. Busca todos os dados (estratégia cache-first poderia ser aplicada aqui)
+    const allData = getAllSheetsData();
+
+    // 2. Roteamento baseado na URL
+    if (params.sheet) {
+      // Rota: /exec?sheet=NomeDaAba
+      const sheetName = params.sheet;
       
-      for (let j = 0; j < headers.length; j++) {
-        // Formata datas
-        if (row[j] instanceof Date) {
-          rowData[headers[j]] = Utilities.formatDate(row[j], Session.getScriptTimeZone(), "dd/MM/yyyy");
-        } else {
-          rowData[headers[j]] = row[j];
-        }
+      if (!allData[sheetName]) {
+        throw new Error(`Aba '${sheetName}' não encontrada.`);
       }
-      
-      jsonData.push(rowData);
+
+      let sheetData = allData[sheetName];
+
+      // 3. Filtragem adicional (Opcional: Filtra por coluna específica se passada na URL)
+      // Ex: ?sheet=Engenharia&Instituto=ICHC
+      Object.keys(params).forEach(key => {
+        if (key !== 'sheet') {
+          sheetData = sheetData.filter(row => String(row[key]) === String(params[key]));
+        }
+      });
+
+      response.data = sheetData;
+    } else {
+      // Rota Default: Retorna tudo
+      response.data = allData;
     }
-    
-    // Retorna a resposta como JSON
-    const response = {
-      success: true,
-      headers: headers,
-      data: jsonData,
-      lastUpdate: new Date().toISOString(),
-      totalRows: jsonData.length
-    };
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
-      
+
   } catch (error) {
-    // Retorna erro em caso de falha
-    const errorResponse = {
-      success: false,
-      error: error.message
-    };
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(errorResponse))
-      .setMimeType(ContentService.MimeType.JSON);
+    response.status = 'error';
+    response.message = error.toString();
   }
+
+  // Retorna JSON puro com MimeType correto para consumo externo (React, Vue, cURL, etc)
+  return ContentService.createTextOutput(JSON.stringify(response))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// =================================================================
+// 2. UI INTERACTION (MENU & MODAL)
+// =================================================================
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('⚡ Admin Tools')
+    .addItem('Gerar JSON (Visualizar)', 'uiExportToJson')
+    .addToUi();
 }
 
 /**
- * Função para obter dados de uma aba específica
- * Pode ser chamada passando o parâmetro ?sheet=NomeDaAba na URL
+ * Wrapper para a UI. Chama o Service e exibe o modal.
  */
-function doGetWithSheetName(e) {
-  try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+function uiExportToJson() {
+  const data = getAllSheetsData();
+  const jsonString = JSON.stringify(data, null, 2);
+  console.log(jsonString);
+  showOutputModal(jsonString);
+}
+
+// =================================================================
+// 3. SERVICE LAYER (CORE LOGIC)
+// =================================================================
+
+/**
+ * Função Pura: Lê todas as abas e retorna o Objeto estruturado.
+ * Desacoplada da UI para ser usada tanto pelo Menu quanto pelo doGet.
+ * * @return {Object} Objeto contendo arrays de dados por aba.
+ */
+function getAllSheetsData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheets = ss.getSheets();
+  const payload = {};
+
+  sheets.forEach(sheet => {
+    const sheetName = sheet.getName();
     
-    // Obtém o nome da aba do parâmetro da URL ou usa a aba ativa
-    const sheetName = e.parameter.sheet;
-    const sheet = sheetName 
-      ? spreadsheet.getSheetByName(sheetName) 
-      : spreadsheet.getActiveSheet();
+    // Pula abas ocultas se necessário
+    // if (sheet.isSheetHidden()) return; 
+
+    const data = getSheetDataAsJson(sheet);
     
-    if (!sheet) {
-      throw new Error('Aba não encontrada: ' + sheetName);
+    if (data && data.length > 0) {
+      payload[sheetName] = data;
     }
-    
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    
-    const jsonData = [];
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
-      const rowData = {};
-      
-      for (let j = 0; j < headers.length; j++) {
-        if (row[j] instanceof Date) {
-          rowData[headers[j]] = Utilities.formatDate(row[j], Session.getScriptTimeZone(), "dd/MM/yyyy");
-        } else {
-          rowData[headers[j]] = row[j];
-        }
-      }
-      
-      jsonData.push(rowData);
-    }
-    
-    const response = {
-      success: true,
-      sheetName: sheet.getName(),
-      headers: headers,
-      data: jsonData,
-      lastUpdate: new Date().toISOString(),
-      totalRows: jsonData.length
-    };
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (error) {
-    const errorResponse = {
-      success: false,
-      error: error.message
-    };
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(errorResponse))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
+  });
+
+  return payload;
 }
 
 /**
- * Função auxiliar para testar o script localmente
- * Execute esta função no editor do Apps Script para ver os dados
+ * Extrai dados de uma aba específica.
  */
-function testGetData() {
-  const result = doGet({});
-  Logger.log(result.getContent());
+function getSheetDataAsJson(sheet) {
+  const range = sheet.getDataRange();
+  const values = range.getValues();
+
+  if (values.length < 2) return [];
+
+  const headers = values[0].map(header => String(header).trim());
+  const rows = values.slice(1);
+
+  const sheetData = rows.map((row) => {
+    const rowObject = {};
+    let hasData = false;
+
+    headers.forEach((header, columnIndex) => {
+      if (header !== "") {
+        const cellValue = row[columnIndex];
+        // Tratamento de Data: Se for objeto Date, mantém. O JSON.stringify converte depois.
+        rowObject[header] = cellValue;
+
+        if (cellValue !== "" && cellValue !== null) {
+          hasData = true;
+        }
+      }
+    });
+
+    return hasData ? rowObject : null;
+  }).filter(item => item !== null);
+
+  return sheetData;
+}
+
+// =================================================================
+// 4. HELPERS
+// =================================================================
+
+function showOutputModal(content) {
+  const htmlOutput = HtmlService.createHtmlOutput(`
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', monospace; background: #f4f4f4; padding: 15px; }
+          textarea { width: 100%; height: 300px; border: 1px solid #ddd; padding: 10px; border-radius: 4px; font-family: monospace; }
+          .btn { background: #2196F3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+          .btn:hover { background: #1976D2; }
+        </style>
+      </head>
+      <body>
+        <h3>Payload JSON Gerado</h3>
+        <textarea id="jsonArea" readonly>${content}</textarea>
+        <button class="btn" onclick="copyToClipboard()">Copiar JSON</button>
+        <script>
+          function copyToClipboard() {
+            document.getElementById("jsonArea").select();
+            document.execCommand("copy");
+          }
+        </script>
+      </body>
+    </html>
+  `).setWidth(600).setHeight(450);
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Visualizador de Dados');
 }
