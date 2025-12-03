@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 Dashboard</h1>
+            <p class="subtitle">Dados atualizados em tempo real</p>
+        </header>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Carregando dados...</p>
+        </div>
+
+        <div class="error-message" id="error" style="display: none;">
+            <p>❌ Erro ao carregar os dados. Por favor, tente novamente.</p>
+            <button onclick="loadData()">Tentar Novamente</button>
+        </div>
+
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <div class="cards-container" id="cards-container">
+                <!-- Cards serão inseridos aqui via JavaScript -->
+            </div>
+
+            <div class="table-container">
+                <h2>📋 Dados da Planilha</h2>
+                <table id="data-table">
+                    <thead id="table-head">
+                        <!-- Cabeçalhos serão inseridos aqui via JavaScript -->
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Dados serão inseridos aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>Desenvolvido com ❤️ | Dados do Google Sheets</p>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
