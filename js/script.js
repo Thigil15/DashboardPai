@@ -1006,7 +1006,11 @@ function setupTableSearch() {
     const searchInput = document.getElementById('table-search');
     if (!searchInput) return;
     
-    searchInput.addEventListener('input', (e) => {
+    // Remove existing listener by replacing the element with a clone
+    const newSearchInput = searchInput.cloneNode(true);
+    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+    
+    newSearchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
         const rows = document.querySelectorAll('#table-container tbody tr');
         
@@ -1075,9 +1079,15 @@ if (menuToggle) {
     });
 }
 
+// Track viewport size for mobile detection
+let isMobileView = window.innerWidth < 992;
+window.addEventListener('resize', () => {
+    isMobileView = window.innerWidth < 992;
+});
+
 // Close sidebar on nav item click (mobile)
 sidebarNav.addEventListener('click', (e) => {
-    if (window.innerWidth < 992 && e.target.closest('.nav-item')) {
+    if (isMobileView && e.target.closest('.nav-item')) {
         sidebar.classList.remove('open');
         const overlay = document.querySelector('.sidebar-overlay');
         if (overlay) overlay.classList.remove('active');
