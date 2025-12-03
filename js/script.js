@@ -797,8 +797,12 @@ function buildCategoryCharts(categoryId, data) {
     if (charts.categoryChart2 && typeof charts.categoryChart2.destroy === 'function') {
         charts.categoryChart2.destroy();
     }
+    if (charts.categoryChart3 && typeof charts.categoryChart3.destroy === 'function') {
+        charts.categoryChart3.destroy();
+    }
     
     const config = dataCategories[categoryId] || { color: '#1a91e7' };
+    const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
     
     // Create chart containers
     if (categoryId === 'InventarioCeaAC2025' || categoryId === 'SolicitacoesProntuarios') {
@@ -850,37 +854,83 @@ function buildCategoryCharts(categoryId, data) {
         }, 100);
     }
     
-    if (categoryId.includes('Equipe')) {
-        const chartCard = document.createElement('div');
-        chartCard.className = 'chart-card';
-        chartCard.innerHTML = `
+    // WS Engenharia - Equipe: People by current location
+    if (categoryId === 'WSEngenhariaEquipe') {
+        // Chart 1: People by Current Location (Bar Chart)
+        const chartCard1 = document.createElement('div');
+        chartCard1.className = 'chart-card';
+        chartCard1.innerHTML = `
             <div class="chart-header">
-                <h3 class="chart-title">Distribuição por Cargo</h3>
-                <span class="chart-subtitle">Quantidade de pessoas por função</span>
+                <h3 class="chart-title">Quantidade de Pessoas por Local Atual</h3>
+                <span class="chart-subtitle">Distribuição da equipe por instituto</span>
             </div>
             <div class="chart-body">
-                <canvas id="categoryCargoChart"></canvas>
+                <canvas id="wsEquipeLocalChart"></canvas>
             </div>
         `;
-        chartsContainer.appendChild(chartCard);
+        chartsContainer.appendChild(chartCard1);
         
-        const cargoCount = {};
+        // Chart 2: Pie chart for proportion
+        const chartCard2 = document.createElement('div');
+        chartCard2.className = 'chart-card';
+        chartCard2.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Proporção por Instituto</h3>
+                <span class="chart-subtitle">Percentual de prestadores por local</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="wsEquipePieChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard2);
+        
+        const localCount = {};
         data.forEach(item => {
-            const cargo = item['Cargo'] || item['Especialidade'] || 'Outros';
-            const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
-            cargoCount[cargo] = (cargoCount[cargo] || 0) + qty;
+            const local = item['LocalAtualInstituto'] || 'N/A';
+            const qty = parseInt(item['QuantidadePrestadores'] || 0);
+            localCount[local] = (localCount[local] || 0) + qty;
         });
         
         setTimeout(() => {
-            const ctx = document.getElementById('categoryCargoChart');
-            if (ctx) {
-                charts.categoryChart1 = new Chart(ctx, {
+            const ctx1 = document.getElementById('wsEquipeLocalChart');
+            if (ctx1) {
+                charts.categoryChart1 = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(localCount),
+                        datasets: [{
+                            label: 'Quantidade de Prestadores',
+                            data: Object.values(localCount),
+                            backgroundColor: chartColors.slice(0, Object.keys(localCount).length),
+                            borderRadius: 6,
+                            barThickness: 40
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            const ctx2 = document.getElementById('wsEquipePieChart');
+            if (ctx2) {
+                charts.categoryChart2 = new Chart(ctx2, {
                     type: 'pie',
                     data: {
-                        labels: Object.keys(cargoCount),
+                        labels: Object.keys(localCount),
                         datasets: [{
-                            data: Object.values(cargoCount),
-                            backgroundColor: ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                            data: Object.values(localCount),
+                            backgroundColor: chartColors.slice(0, Object.keys(localCount).length),
                             borderWidth: 2,
                             borderColor: '#fff'
                         }]
@@ -889,10 +939,468 @@ function buildCategoryCharts(categoryId, data) {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                position: 'bottom'
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        }, 100);
+    }
+    
+    // WS Engenharia - Mobiliários: Furniture by Instituto
+    if (categoryId === 'WSEngenhariaMobiliarios ') {
+        // Chart 1: Stacked bar chart for furniture types
+        const chartCard1 = document.createElement('div');
+        chartCard1.className = 'chart-card chart-wide';
+        chartCard1.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Mobiliário por Instituto</h3>
+                <span class="chart-subtitle">Distribuição de mesas, cadeiras e equipamentos</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="wsMobiliarioBarChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard1);
+        
+        // Chart 2: Pie chart for total items
+        const chartCard2 = document.createElement('div');
+        chartCard2.className = 'chart-card';
+        chartCard2.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Total de Itens por Instituto</h3>
+                <span class="chart-subtitle">Soma de todos os itens</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="wsMobiliarioPieChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard2);
+        
+        const institutos = data.map(item => item['Instituto'] || 'N/A');
+        const mesas = data.map(item => parseInt(item['QuantidadeMesa'] || 0));
+        const cadeiras = data.map(item => parseInt(item['QuantidadeCadeiras'] || 0));
+        const micros = data.map(item => parseInt(item['QuantidadeMicrocomputadores'] || 0));
+        const totais = data.map(item => 
+            parseInt(item['QuantidadeMesa'] || 0) + 
+            parseInt(item['QuantidadeCadeiras'] || 0) + 
+            parseInt(item['QuantidadeMicrocomputadores'] || 0)
+        );
+        
+        setTimeout(() => {
+            const ctx1 = document.getElementById('wsMobiliarioBarChart');
+            if (ctx1) {
+                charts.categoryChart1 = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: institutos,
+                        datasets: [
+                            {
+                                label: 'Mesas',
+                                data: mesas,
+                                backgroundColor: '#1a91e7',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Cadeiras',
+                                data: cadeiras,
+                                backgroundColor: '#10b981',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Microcomputadores',
+                                data: micros,
+                                backgroundColor: '#f59e0b',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 }
                             }
                         }
+                    }
+                });
+            }
+            
+            const ctx2 = document.getElementById('wsMobiliarioPieChart');
+            if (ctx2) {
+                charts.categoryChart2 = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: institutos,
+                        datasets: [{
+                            data: totais,
+                            backgroundColor: chartColors.slice(0, institutos.length),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '50%',
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        }, 100);
+    }
+    
+    // Psicologia - Equipe: People by specialty and location
+    if (categoryId === 'PsicologiaEquipe') {
+        // Chart 1: Bar chart by specialty
+        const chartCard1 = document.createElement('div');
+        chartCard1.className = 'chart-card';
+        chartCard1.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Quantidade por Especialidade</h3>
+                <span class="chart-subtitle">Distribuição da equipe de psicologia</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="psicologiaEspChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard1);
+        
+        // Chart 2: Pie chart
+        const chartCard2 = document.createElement('div');
+        chartCard2.className = 'chart-card';
+        chartCard2.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Proporção por Especialidade</h3>
+                <span class="chart-subtitle">Percentual da equipe</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="psicologiaPieChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard2);
+        
+        const espCount = {};
+        data.forEach(item => {
+            const esp = item['Especialidade'] || 'N/A';
+            const qty = parseInt(item['QuantidadePessoas'] || 0);
+            espCount[esp] = (espCount[esp] || 0) + qty;
+        });
+        
+        setTimeout(() => {
+            const ctx1 = document.getElementById('psicologiaEspChart');
+            if (ctx1) {
+                charts.categoryChart1 = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(espCount),
+                        datasets: [{
+                            label: 'Quantidade de Pessoas',
+                            data: Object.values(espCount),
+                            backgroundColor: ['#06b6d4', '#14b8a6'],
+                            borderRadius: 6,
+                            barThickness: 50
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
+                        }
+                    }
+                });
+            }
+            
+            const ctx2 = document.getElementById('psicologiaPieChart');
+            if (ctx2) {
+                charts.categoryChart2 = new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(espCount),
+                        datasets: [{
+                            data: Object.values(espCount),
+                            backgroundColor: ['#06b6d4', '#14b8a6'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }, 100);
+    }
+    
+    // Psicologia - Mobiliários
+    if (categoryId === 'PsicologiaMobiliarios') {
+        const chartCard = document.createElement('div');
+        chartCard.className = 'chart-card';
+        chartCard.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Distribuição de Mobiliário</h3>
+                <span class="chart-subtitle">Itens por tipo</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="psicologiaMobChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard);
+        
+        let mesas = 0, micros = 0, cadeiras = 0, cadeirasFix = 0;
+        data.forEach(item => {
+            mesas += parseInt(item['QuantidadeMesa'] || 0);
+            micros += parseInt(item['QuantidadeMicrocomputadores'] || 0);
+            cadeiras += parseInt(item['QuantidadeCadeiras'] || 0);
+            cadeirasFix += parseInt(item['QuantidadeCadeirasfixas'] || 0);
+        });
+        
+        setTimeout(() => {
+            const ctx = document.getElementById('psicologiaMobChart');
+            if (ctx) {
+                charts.categoryChart1 = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mesas', 'Microcomputadores', 'Cadeiras Giratórias', 'Cadeiras Fixas'],
+                        datasets: [{
+                            label: 'Quantidade',
+                            data: [mesas, micros, cadeiras, cadeirasFix],
+                            backgroundColor: ['#14b8a6', '#06b6d4', '#0ea5e9', '#0284c7'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
+        }, 100);
+    }
+    
+    // Generic Equipe categories (Controle Interno, Qualidade, Engenharia, Assessoria, Comunicação)
+    if (categoryId.includes('Equipe') && !['WSEngenhariaEquipe', 'PsicologiaEquipe'].includes(categoryId)) {
+        // Chart 1: Bar chart by cargo
+        const chartCard1 = document.createElement('div');
+        chartCard1.className = 'chart-card';
+        chartCard1.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Quantidade por Cargo</h3>
+                <span class="chart-subtitle">Distribuição da equipe por função</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="equipeCargoBarChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard1);
+        
+        // Chart 2: Pie chart
+        const chartCard2 = document.createElement('div');
+        chartCard2.className = 'chart-card';
+        chartCard2.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Proporção por Cargo</h3>
+                <span class="chart-subtitle">Percentual de pessoas</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="equipeCargoPieChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard2);
+        
+        // Chart 3: Location distribution
+        const chartCard3 = document.createElement('div');
+        chartCard3.className = 'chart-card';
+        chartCard3.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Distribuição por Local</h3>
+                <span class="chart-subtitle">Pessoas por local atual</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="equipeLocalChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard3);
+        
+        const cargoCount = {};
+        const localCount = {};
+        data.forEach(item => {
+            const cargo = item['Cargo'] || item['Especialidade'] || 'Outros';
+            const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
+            cargoCount[cargo] = (cargoCount[cargo] || 0) + qty;
+            
+            const local = item['Local Atual'] || item['LocalAtual'] || 'N/A';
+            localCount[local] = (localCount[local] || 0) + qty;
+        });
+        
+        setTimeout(() => {
+            const ctx1 = document.getElementById('equipeCargoBarChart');
+            if (ctx1) {
+                charts.categoryChart1 = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(cargoCount),
+                        datasets: [{
+                            label: 'Quantidade de Pessoas',
+                            data: Object.values(cargoCount),
+                            backgroundColor: chartColors.slice(0, Object.keys(cargoCount).length),
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
+            
+            const ctx2 = document.getElementById('equipeCargoPieChart');
+            if (ctx2) {
+                charts.categoryChart2 = new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(cargoCount),
+                        datasets: [{
+                            data: Object.values(cargoCount),
+                            backgroundColor: chartColors.slice(0, Object.keys(cargoCount).length),
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+            
+            const ctx3 = document.getElementById('equipeLocalChart');
+            if (ctx3) {
+                charts.categoryChart3 = new Chart(ctx3, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(localCount),
+                        datasets: [{
+                            data: Object.values(localCount),
+                            backgroundColor: chartColors.slice(0, Object.keys(localCount).length),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '50%',
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }, 100);
+    }
+    
+    // Generic Mobiliários categories
+    if (categoryId.includes('Mobiliario') && !['WSEngenhariaMobiliarios ', 'PsicologiaMobiliarios'].includes(categoryId)) {
+        // Chart 1: Bar chart for furniture types
+        const chartCard1 = document.createElement('div');
+        chartCard1.className = 'chart-card';
+        chartCard1.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Distribuição de Mobiliário</h3>
+                <span class="chart-subtitle">Itens por tipo</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="mobiliarioBarChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard1);
+        
+        // Chart 2: Pie chart
+        const chartCard2 = document.createElement('div');
+        chartCard2.className = 'chart-card';
+        chartCard2.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Proporção de Itens</h3>
+                <span class="chart-subtitle">Percentual por tipo</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="mobiliarioPieChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard2);
+        
+        let mesas = 0, cadeiras = 0, micros = 0, impressoras = 0, tvs = 0;
+        data.forEach(item => {
+            mesas += parseInt(item['QuantidadeMesa'] || 0);
+            cadeiras += parseInt(item['QuantidadeCadeiras'] || 0);
+            micros += parseInt(item['QuantidadeMicrocomputadores'] || 0);
+            impressoras += parseInt(item['QuantidadeImpressora'] || item['QunatidadeImpressora'] || 0);
+            tvs += parseInt(item['TV'] || 0);
+        });
+        
+        const itemsLabels = [];
+        const itemsData = [];
+        const itemsColors = [];
+        
+        if (mesas > 0) { itemsLabels.push('Mesas'); itemsData.push(mesas); itemsColors.push('#1a91e7'); }
+        if (cadeiras > 0) { itemsLabels.push('Cadeiras'); itemsData.push(cadeiras); itemsColors.push('#10b981'); }
+        if (micros > 0) { itemsLabels.push('Microcomputadores'); itemsData.push(micros); itemsColors.push('#f59e0b'); }
+        if (impressoras > 0) { itemsLabels.push('Impressoras'); itemsData.push(impressoras); itemsColors.push('#8b5cf6'); }
+        if (tvs > 0) { itemsLabels.push('TVs'); itemsData.push(tvs); itemsColors.push('#ec4899'); }
+        
+        setTimeout(() => {
+            const ctx1 = document.getElementById('mobiliarioBarChart');
+            if (ctx1 && itemsLabels.length > 0) {
+                charts.categoryChart1 = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: itemsLabels,
+                        datasets: [{
+                            label: 'Quantidade',
+                            data: itemsData,
+                            backgroundColor: itemsColors,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
+            
+            const ctx2 = document.getElementById('mobiliarioPieChart');
+            if (ctx2 && itemsLabels.length > 0) {
+                charts.categoryChart2 = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: itemsLabels,
+                        datasets: [{
+                            data: itemsData,
+                            backgroundColor: itemsColors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '50%',
+                        plugins: { legend: { position: 'bottom' } }
                     }
                 });
             }
