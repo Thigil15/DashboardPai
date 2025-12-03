@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Dashboard CeAC</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>📊 Dashboard</h1>
-            <p class="subtitle">Dados atualizados em tempo real</p>
+            <h1>📊 Dashboard CeAC</h1>
+            <p class="subtitle">Visualização de Dados do Banco de Dados</p>
         </header>
 
         <div class="loading" id="loading">
@@ -24,26 +24,29 @@
         </div>
 
         <div class="dashboard" id="dashboard" style="display: none;">
-            <div class="cards-container" id="cards-container">
-                <!-- Cards serão inseridos aqui via JavaScript -->
-            </div>
+            <section class="summary-section">
+                <h2 class="section-title">📈 Resumo Geral</h2>
+                <div class="cards-container" id="cards-container">
+                    <!-- Cards de resumo geral serão inseridos aqui via JavaScript -->
+                </div>
+            </section>
 
-            <div class="table-container">
-                <h2>📋 Dados da Planilha</h2>
-                <table id="data-table">
-                    <thead id="table-head">
-                        <!-- Cabeçalhos serão inseridos aqui via JavaScript -->
-                    </thead>
-                    <tbody id="table-body">
-                        <!-- Dados serão inseridos aqui via JavaScript -->
-                    </tbody>
-                </table>
-            </div>
+            <section class="data-section">
+                <h2 class="section-title">📂 Dados por Categoria</h2>
+                <div class="tabs-wrapper">
+                    <div class="tabs-container" id="tabs-container">
+                        <!-- Tabs serão inseridas aqui via JavaScript -->
+                    </div>
+                </div>
+                <div class="tab-content" id="tab-content">
+                    <!-- Conteúdo das tabs será inserido aqui via JavaScript -->
+                </div>
+            </section>
         </div>
     </div>
 
     <footer class="footer">
-        <p>Desenvolvido com ❤️ | Dados do Google Sheets</p>
+        <p>Desenvolvido com ❤️ | Dashboard CeAC</p>
     </footer>
 
     <script src="js/script.js"></script>
