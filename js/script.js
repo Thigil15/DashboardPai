@@ -1,113 +1,157 @@
-// Caminho para o arquivo JSON local
+// =====================================================
+// Hospital das Clínicas CeAC Dashboard
+// Professional Healthcare Dashboard
+// =====================================================
+
+// Configuration
 const JSON_FILE_PATH = 'Banco De Dados.json';
 
-// Elementos do DOM
+// DOM Elements
 const loadingElement = document.getElementById('loading');
 const errorElement = document.getElementById('error');
 const dashboardElement = document.getElementById('dashboard');
-const cardsContainer = document.getElementById('cards-container');
-const tabsContainer = document.getElementById('tabs-container');
-const tabContent = document.getElementById('tab-content');
+const sidebarNav = document.getElementById('sidebar-nav');
+const overviewSection = document.getElementById('overview-section');
+const categorySection = document.getElementById('category-section');
+const metricsGrid = document.getElementById('metrics-grid');
+const headerStats = document.getElementById('header-stats');
+const currentSectionBreadcrumb = document.getElementById('current-section');
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
 
-// Dados globais
+// Global Data
 let allData = null;
-let currentTab = null;
+let currentView = 'overview';
+let charts = {};
 
-// Configuração das categorias de dados
+// Category Configuration
 const dataCategories = {
     'InventarioCeaAC2025': {
         name: 'Inventário CeAC 2025',
         icon: '📦',
-        color: '#667eea'
+        color: '#1a91e7',
+        bgColor: '#e8f4fd'
     },
     'SolicitacoesProntuarios': {
         name: 'Solicitações de Prontuários',
         icon: '📋',
-        color: '#764ba2'
+        color: '#8b5cf6',
+        bgColor: '#ede9fe'
     },
     'WSEngenhariaEquipe': {
         name: 'WS Engenharia - Equipe',
         icon: '👷',
-        color: '#f093fb'
+        color: '#f59e0b',
+        bgColor: '#fef3c7'
     },
     'WSEngenhariaMobiliarios ': {
         name: 'WS Engenharia - Mobiliários',
         icon: '🪑',
-        color: '#f5576c'
+        color: '#ef4444',
+        bgColor: '#fee2e2'
     },
     'PsicologiaEquipe': {
         name: 'Psicologia - Equipe',
         icon: '🧠',
-        color: '#4facfe'
+        color: '#06b6d4',
+        bgColor: '#cffafe'
     },
     'PsicologiaMobiliarios': {
         name: 'Psicologia - Mobiliários',
         icon: '🛋️',
-        color: '#00f2fe'
+        color: '#14b8a6',
+        bgColor: '#ccfbf1'
     },
     'ControleInternoEquipe': {
         name: 'Controle Interno - Equipe',
         icon: '📊',
-        color: '#43e97b'
+        color: '#10b981',
+        bgColor: '#d1fae5'
     },
     'ControleInternoMobiliarios': {
         name: 'Controle Interno - Mobiliários',
         icon: '🗄️',
-        color: '#38f9d7'
+        color: '#22c55e',
+        bgColor: '#dcfce7'
     },
     'QualidadeEquipe': {
         name: 'Qualidade - Equipe',
         icon: '⭐',
-        color: '#fa709a'
+        color: '#eab308',
+        bgColor: '#fef9c3'
     },
     'QualidadeMobiliarios': {
         name: 'Qualidade - Mobiliários',
         icon: '📐',
-        color: '#fee140'
+        color: '#f97316',
+        bgColor: '#ffedd5'
     },
     'EngenhariaEquipe': {
         name: 'Engenharia - Equipe',
         icon: '⚙️',
-        color: '#30cfd0'
+        color: '#6366f1',
+        bgColor: '#e0e7ff'
     },
     'EngenhariaMobiliarios': {
         name: 'Engenharia - Mobiliários',
         icon: '🔧',
-        color: '#330867'
+        color: '#8b5cf6',
+        bgColor: '#ede9fe'
     },
     'AssessoriaEquipe': {
         name: 'Assessoria - Equipe',
         icon: '💼',
-        color: '#a8edea'
+        color: '#ec4899',
+        bgColor: '#fce7f3'
     },
     'AssessoriaMobiliarios': {
         name: 'Assessoria - Mobiliários',
         icon: '📁',
-        color: '#fed6e3'
+        color: '#d946ef',
+        bgColor: '#fae8ff'
     },
     'ComunicacaoEquipe': {
         name: 'Comunicação - Equipe',
         icon: '📢',
-        color: '#d299c2'
+        color: '#0ea5e9',
+        bgColor: '#e0f2fe'
     },
     'ComunicacaoMobiliarios': {
         name: 'Comunicação - Mobiliários',
         icon: '💻',
-        color: '#fef9d7'
+        color: '#0284c7',
+        bgColor: '#e0f2fe'
     },
     'SalaReuniaoMobiliarios': {
         name: 'Sala de Reunião - Mobiliários',
         icon: '🏢',
-        color: '#89f7fe'
+        color: '#7c3aed',
+        bgColor: '#ede9fe'
     },
     'Sala15Mobiliarios': {
         name: 'Sala 15 - Mobiliários',
         icon: '🚪',
-        color: '#66a6ff'
+        color: '#2563eb',
+        bgColor: '#dbeafe'
     }
 };
 
-// Função para carregar os dados do arquivo JSON local
+// Chart.js default configuration (if available)
+function configureChartDefaults() {
+    if (typeof Chart !== 'undefined') {
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = '#64748b';
+    }
+}
+
+// Check if Chart.js is loaded
+const isChartJsLoaded = () => typeof Chart !== 'undefined';
+
+// =====================================================
+// Data Loading
+// =====================================================
+
 async function loadData() {
     showLoading();
     
@@ -124,7 +168,7 @@ async function loadData() {
             throw new Error('Arquivo JSON vazio');
         }
         
-        displayDashboard();
+        initializeDashboard();
         showDashboard();
         
     } catch (error) {
@@ -133,167 +177,763 @@ async function loadData() {
     }
 }
 
-// Função para exibir o dashboard completo
-function displayDashboard() {
-    // Limpar containers
-    cardsContainer.innerHTML = '';
-    tabsContainer.innerHTML = '';
-    tabContent.innerHTML = '';
+// =====================================================
+// Dashboard Initialization
+// =====================================================
+
+function initializeDashboard() {
+    // Configure Chart.js if available
+    configureChartDefaults();
     
-    // Criar cards de resumo geral
-    createGlobalSummaryCards();
+    // Update last update time
+    document.getElementById('last-update').textContent = new Date().toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
     
-    // Criar tabs para cada categoria
-    createTabs();
+    // Build navigation
+    buildNavigation();
     
-    // Selecionar primeira tab
-    const firstTab = Object.keys(allData)[0];
-    if (firstTab) {
-        selectTab(firstTab);
-    }
+    // Update header stats
+    updateHeaderStats();
+    
+    // Show overview by default
+    showOverview();
 }
 
-// Função para criar cards de resumo global
-function createGlobalSummaryCards() {
-    const categories = Object.keys(allData);
+// =====================================================
+// Navigation
+// =====================================================
+
+function buildNavigation() {
+    sidebarNav.innerHTML = '';
     
-    // Card com total de categorias
-    const categoriesCard = createCard('📂', categories.length, 'Categorias de Dados');
-    cardsContainer.appendChild(categoriesCard);
+    // Overview item
+    const overviewItem = createNavItem('overview', '📊', 'Visão Geral', null, true);
+    sidebarNav.appendChild(overviewItem);
     
-    // Card com total de registros
-    let totalRecords = 0;
-    categories.forEach(cat => {
-        if (Array.isArray(allData[cat])) {
-            totalRecords += allData[cat].length;
+    // Separator
+    const separator = document.createElement('div');
+    separator.style.cssText = 'height: 1px; background: rgba(255,255,255,0.1); margin: 12px 0;';
+    sidebarNav.appendChild(separator);
+    
+    // Category items
+    Object.keys(allData).forEach(category => {
+        const config = dataCategories[category] || {
+            name: category,
+            icon: '📂',
+            color: '#1a91e7'
+        };
+        
+        const count = Array.isArray(allData[category]) ? allData[category].length : 0;
+        const navItem = createNavItem(category, config.icon, config.name, count);
+        sidebarNav.appendChild(navItem);
+    });
+}
+
+function createNavItem(id, icon, label, badge, isActive = false) {
+    const item = document.createElement('button');
+    item.className = `nav-item${isActive ? ' active' : ''}`;
+    item.dataset.category = id;
+    
+    item.innerHTML = `
+        <span class="nav-icon">${icon}</span>
+        <span class="nav-label">${label}</span>
+        ${badge !== null ? `<span class="nav-badge">${formatNumber(badge)}</span>` : ''}
+    `;
+    
+    item.addEventListener('click', () => {
+        if (id === 'overview') {
+            showOverview();
+        } else {
+            showCategory(id);
         }
     });
-    const recordsCard = createCard('📋', formatNumber(totalRecords), 'Total de Registros');
-    cardsContainer.appendChild(recordsCard);
     
-    // Cards específicos para dados importantes
-    if (allData['InventarioCeaAC2025']) {
-        const inventario = allData['InventarioCeaAC2025'];
-        const emUso = inventario.filter(item => item['STATUS'] === 'EM USO').length;
-        const inventarioCard = createCard('📦', formatNumber(emUso), 'Itens em Uso (Inventário)');
-        cardsContainer.appendChild(inventarioCard);
-    }
+    return item;
+}
+
+function updateActiveNavItem(categoryId) {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.category === categoryId) {
+            item.classList.add('active');
+        }
+    });
+}
+
+// =====================================================
+// Header Stats
+// =====================================================
+
+function updateHeaderStats() {
+    let totalRecords = 0;
+    let totalCategories = Object.keys(allData).length;
     
-    if (allData['SolicitacoesProntuarios']) {
-        const solicitacoes = allData['SolicitacoesProntuarios'];
-        const pendentes = solicitacoes.filter(item => item['STATUS'] === 'PENDENTE').length;
-        const enviados = solicitacoes.filter(item => item['STATUS'] === 'ENVIADO').length;
-        
-        const pendentesCard = createCard('⏳', formatNumber(pendentes), 'Solicitações Pendentes');
-        cardsContainer.appendChild(pendentesCard);
-        
-        const enviadosCard = createCard('✅', formatNumber(enviados), 'Solicitações Enviadas');
-        cardsContainer.appendChild(enviadosCard);
-    }
+    Object.values(allData).forEach(data => {
+        if (Array.isArray(data)) {
+            totalRecords += data.length;
+        }
+    });
     
-    // Card de equipe total
+    headerStats.innerHTML = `
+        <div class="header-stat">
+            <span class="header-stat-value">${formatNumber(totalRecords)}</span>
+            <span class="header-stat-label">Registros</span>
+        </div>
+        <div class="header-stat">
+            <span class="header-stat-value">${totalCategories}</span>
+            <span class="header-stat-label">Categorias</span>
+        </div>
+    `;
+}
+
+// =====================================================
+// Overview Section
+// =====================================================
+
+function showOverview() {
+    currentView = 'overview';
+    updateActiveNavItem('overview');
+    currentSectionBreadcrumb.textContent = 'Visão Geral';
+    
+    overviewSection.style.display = 'block';
+    categorySection.style.display = 'none';
+    
+    // Calculate totals
+    let totalRecords = 0;
+    Object.values(allData).forEach(data => {
+        if (Array.isArray(data)) totalRecords += data.length;
+    });
+    
+    document.getElementById('total-records-badge').textContent = `${formatNumber(totalRecords)} registros`;
+    
+    // Build metrics
+    buildOverviewMetrics();
+    
+    // Build charts
+    buildOverviewCharts();
+}
+
+function buildOverviewMetrics() {
+    const inventario = allData['InventarioCeaAC2025'] || [];
+    const solicitacoes = allData['SolicitacoesProntuarios'] || [];
+    
+    // Count inventory by status
+    const emUso = inventario.filter(item => item['STATUS'] === 'EM USO').length;
+    
+    // Count requests by status
+    const pendentes = solicitacoes.filter(item => item['STATUS'] === 'PENDENTE').length;
+    const enviados = solicitacoes.filter(item => item['STATUS'] === 'ENVIADO').length;
+    
+    // Count total staff
     let totalEquipe = 0;
-    categories.forEach(cat => {
-        if (cat.includes('Equipe') && Array.isArray(allData[cat])) {
-            allData[cat].forEach(item => {
-                const qty = item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0;
-                totalEquipe += parseInt(qty) || 0;
+    Object.keys(allData).forEach(key => {
+        if (key.includes('Equipe') && Array.isArray(allData[key])) {
+            allData[key].forEach(item => {
+                const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
+                totalEquipe += qty;
             });
         }
     });
-    if (totalEquipe > 0) {
-        const equipeCard = createCard('👥', formatNumber(totalEquipe), 'Total de Pessoas');
-        cardsContainer.appendChild(equipeCard);
-    }
-}
-
-// Função para criar tabs
-function createTabs() {
-    const categories = Object.keys(allData);
     
-    categories.forEach(category => {
-        const config = dataCategories[category] || {
-            name: category,
-            icon: '📄',
-            color: '#667eea'
-        };
-        
-        const tab = document.createElement('button');
-        tab.className = 'tab-button';
-        tab.dataset.category = category;
-        tab.innerHTML = `<span class="tab-icon">${config.icon}</span> ${config.name}`;
-        tab.style.setProperty('--tab-color', config.color);
-        
-        tab.addEventListener('click', () => selectTab(category));
-        
-        tabsContainer.appendChild(tab);
-    });
-}
-
-// Função para selecionar uma tab
-function selectTab(category) {
-    currentTab = category;
-    
-    // Atualizar estado das tabs
-    document.querySelectorAll('.tab-button').forEach(tab => {
-        tab.classList.remove('active');
-        if (tab.dataset.category === category) {
-            tab.classList.add('active');
+    // Count furniture
+    let totalMesas = 0, totalCadeiras = 0, totalComputadores = 0;
+    Object.keys(allData).forEach(key => {
+        if (key.includes('Mobiliario') && Array.isArray(allData[key])) {
+            allData[key].forEach(item => {
+                totalMesas += parseInt(item['QuantidadeMesa'] || 0);
+                totalCadeiras += parseInt(item['QuantidadeCadeiras'] || 0);
+                totalComputadores += parseInt(item['QuantidadeMicrocomputadores'] || 0);
+            });
         }
     });
     
-    // Exibir conteúdo da tab
-    displayTabContent(category);
+    metricsGrid.innerHTML = `
+        <div class="metric-card" style="--metric-color: #1a91e7; --metric-bg: #e8f4fd;">
+            <div class="metric-header">
+                <div class="metric-icon">📦</div>
+            </div>
+            <div class="metric-value">${formatNumber(inventario.length)}</div>
+            <div class="metric-label">Itens no Inventário</div>
+            <div class="metric-sublabel">${formatNumber(emUso)} em uso</div>
+        </div>
+        <div class="metric-card" style="--metric-color: #8b5cf6; --metric-bg: #ede9fe;">
+            <div class="metric-header">
+                <div class="metric-icon">📋</div>
+            </div>
+            <div class="metric-value">${formatNumber(solicitacoes.length)}</div>
+            <div class="metric-label">Solicitações</div>
+            <div class="metric-sublabel">${formatNumber(pendentes)} pendentes</div>
+        </div>
+        <div class="metric-card" style="--metric-color: #10b981; --metric-bg: #d1fae5;">
+            <div class="metric-header">
+                <div class="metric-icon">✅</div>
+            </div>
+            <div class="metric-value">${formatNumber(enviados)}</div>
+            <div class="metric-label">Solicitações Enviadas</div>
+            <div class="metric-sublabel">${((enviados / (solicitacoes.length || 1)) * 100).toFixed(1)}% do total</div>
+        </div>
+        <div class="metric-card" style="--metric-color: #f59e0b; --metric-bg: #fef3c7;">
+            <div class="metric-header">
+                <div class="metric-icon">👥</div>
+            </div>
+            <div class="metric-value">${formatNumber(totalEquipe)}</div>
+            <div class="metric-label">Colaboradores</div>
+            <div class="metric-sublabel">Em todas as equipes</div>
+        </div>
+        <div class="metric-card" style="--metric-color: #06b6d4; --metric-bg: #cffafe;">
+            <div class="metric-header">
+                <div class="metric-icon">🖥️</div>
+            </div>
+            <div class="metric-value">${formatNumber(totalComputadores)}</div>
+            <div class="metric-label">Computadores</div>
+            <div class="metric-sublabel">Equipamentos de TI</div>
+        </div>
+        <div class="metric-card" style="--metric-color: #ec4899; --metric-bg: #fce7f3;">
+            <div class="metric-header">
+                <div class="metric-icon">🪑</div>
+            </div>
+            <div class="metric-value">${formatNumber(totalMesas + totalCadeiras)}</div>
+            <div class="metric-label">Mobiliário</div>
+            <div class="metric-sublabel">${totalMesas} mesas, ${totalCadeiras} cadeiras</div>
+        </div>
+    `;
 }
 
-// Função para exibir conteúdo de uma tab
-function displayTabContent(category) {
-    tabContent.innerHTML = '';
-    
-    const data = allData[category];
-    if (!Array.isArray(data) || data.length === 0) {
-        tabContent.innerHTML = '<p class="no-data">Nenhum dado disponível para esta categoria.</p>';
+function buildOverviewCharts() {
+    // Check if Chart.js is loaded
+    if (!isChartJsLoaded()) {
+        console.warn('Chart.js não está disponível. Gráficos não serão exibidos.');
+        // Hide chart containers or show fallback
+        document.querySelectorAll('.chart-card').forEach(card => {
+            card.querySelector('.chart-body').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <p>Gráfico disponível em breve</p>
+                </div>
+            `;
+        });
         return;
     }
     
-    const config = dataCategories[category] || { name: category, icon: '📄', color: '#667eea' };
+    // Destroy existing charts
+    Object.values(charts).forEach(chart => {
+        if (chart && typeof chart.destroy === 'function') {
+            chart.destroy();
+        }
+    });
+    charts = {};
     
-    // Container para cards da categoria
-    const categoryCardsContainer = document.createElement('div');
-    categoryCardsContainer.className = 'category-cards';
+    const inventario = allData['InventarioCeaAC2025'] || [];
+    const solicitacoes = allData['SolicitacoesProntuarios'] || [];
     
-    // Criar cards específicos para a categoria
-    createCategoryCards(data, category, categoryCardsContainer);
+    // Chart 1: Inventory Status
+    const statusCount = {};
+    inventario.forEach(item => {
+        const status = item['STATUS'] || 'N/A';
+        statusCount[status] = (statusCount[status] || 0) + 1;
+    });
     
-    tabContent.appendChild(categoryCardsContainer);
+    const statusCtx = document.getElementById('inventoryStatusChart');
+    if (statusCtx) {
+        charts.inventoryStatus = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(statusCount),
+                datasets: [{
+                    data: Object.values(statusCount),
+                    backgroundColor: ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                }
+            }
+        });
+    }
     
-    // Criar tabela
-    const tableContainer = document.createElement('div');
-    tableContainer.className = 'table-container';
+    // Chart 2: Requests Status
+    const requestStatusCount = {};
+    solicitacoes.forEach(item => {
+        const status = item['STATUS'] || 'N/A';
+        requestStatusCount[status] = (requestStatusCount[status] || 0) + 1;
+    });
     
-    const tableTitle = document.createElement('h2');
-    tableTitle.innerHTML = `${config.icon} ${config.name}`;
-    tableContainer.appendChild(tableTitle);
+    const requestsCtx = document.getElementById('requestsStatusChart');
+    if (requestsCtx) {
+        charts.requestsStatus = new Chart(requestsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(requestStatusCount),
+                datasets: [{
+                    data: Object.values(requestStatusCount),
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Chart 3: Inventory by Sector (Bar Chart)
+    const sectorCount = {};
+    inventario.forEach(item => {
+        const setor = item['SETOR'] || 'N/A';
+        sectorCount[setor] = (sectorCount[setor] || 0) + 1;
+    });
+    
+    // Sort and get top 10
+    const topSectors = Object.entries(sectorCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    
+    const sectorCtx = document.getElementById('inventorySectorChart');
+    if (sectorCtx) {
+        charts.inventorySector = new Chart(sectorCtx, {
+            type: 'bar',
+            data: {
+                labels: topSectors.map(s => s[0]),
+                datasets: [{
+                    label: 'Quantidade de Itens',
+                    data: topSectors.map(s => s[1]),
+                    backgroundColor: 'rgba(26, 145, 231, 0.8)',
+                    borderColor: '#1a91e7',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            precision: 0
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Chart 4: Inventory by Floor
+    const floorCount = {};
+    inventario.forEach(item => {
+        const andar = item['ANDAR'] || 'N/A';
+        floorCount[andar] = (floorCount[andar] || 0) + 1;
+    });
+    
+    const floorCtx = document.getElementById('inventoryFloorChart');
+    if (floorCtx) {
+        charts.inventoryFloor = new Chart(floorCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(floorCount),
+                datasets: [{
+                    data: Object.values(floorCount),
+                    backgroundColor: [
+                        '#1a91e7', '#10b981', '#f59e0b', '#ef4444', 
+                        '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Chart 5: Top Specialties
+    const specialtyCount = {};
+    solicitacoes.forEach(item => {
+        const esp = item['ESPECIALIDADE ASSISTENCIAL:'] || item['ESPECIALIDADE MEDICINA DO TRABALHO:'];
+        if (esp && esp !== '' && esp !== 'N/A') {
+            specialtyCount[esp] = (specialtyCount[esp] || 0) + 1;
+        }
+    });
+    
+    const topSpecialties = Object.entries(specialtyCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8);
+    
+    const specialtiesCtx = document.getElementById('specialtiesChart');
+    if (specialtiesCtx) {
+        charts.specialties = new Chart(specialtiesCtx, {
+            type: 'bar',
+            data: {
+                labels: topSpecialties.map(s => s[0].length > 20 ? s[0].substring(0, 20) + '...' : s[0]),
+                datasets: [{
+                    label: 'Solicitações',
+                    data: topSpecialties.map(s => s[1]),
+                    backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                    borderColor: '#8b5cf6',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        },
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// =====================================================
+// Category Section
+// =====================================================
+
+function showCategory(categoryId) {
+    currentView = categoryId;
+    updateActiveNavItem(categoryId);
+    
+    const config = dataCategories[categoryId] || { name: categoryId, icon: '📂' };
+    currentSectionBreadcrumb.textContent = config.name;
+    
+    overviewSection.style.display = 'none';
+    categorySection.style.display = 'block';
+    
+    const data = allData[categoryId] || [];
+    
+    // Update header
+    document.getElementById('category-name').textContent = config.name;
+    document.querySelector('#category-title .section-icon').textContent = config.icon;
+    document.getElementById('category-records-badge').textContent = `${formatNumber(data.length)} registros`;
+    
+    // Build category-specific content
+    buildCategoryMetrics(categoryId, data);
+    buildCategoryCharts(categoryId, data);
+    buildCategoryTable(categoryId, data);
+}
+
+function buildCategoryMetrics(categoryId, data) {
+    const metricsContainer = document.getElementById('category-metrics');
+    metricsContainer.innerHTML = '';
+    
+    if (!Array.isArray(data) || data.length === 0) return;
+    
+    const config = dataCategories[categoryId] || { color: '#1a91e7', bgColor: '#e8f4fd' };
+    
+    // Create metrics based on category type
+    let metrics = [];
+    
+    if (categoryId === 'InventarioCeaAC2025') {
+        const statusCount = {};
+        const patrimonioCount = {};
+        
+        data.forEach(item => {
+            const status = item['STATUS'] || 'N/A';
+            const patrimonio = item['PATRIMÔNIOS - CeAC'] || 'N/A';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+            patrimonioCount[patrimonio] = (patrimonioCount[patrimonio] || 0) + 1;
+        });
+        
+        Object.entries(statusCount).forEach(([status, count]) => {
+            metrics.push({ icon: status === 'EM USO' ? '✅' : '📋', value: count, label: status });
+        });
+        
+    } else if (categoryId === 'SolicitacoesProntuarios') {
+        const statusCount = {};
+        const tipoCount = {};
+        
+        data.forEach(item => {
+            const status = item['STATUS'] || 'N/A';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+            
+            const tipo = item['SOLICITAÇÃO:'] || 'N/A';
+            if (tipo !== 'N/A') {
+                const shortTipo = tipo.split(' - ')[0];
+                tipoCount[shortTipo] = (tipoCount[shortTipo] || 0) + 1;
+            }
+        });
+        
+        metrics.push({ icon: '✅', value: statusCount['ENVIADO'] || 0, label: 'Enviados' });
+        metrics.push({ icon: '⏳', value: statusCount['PENDENTE'] || 0, label: 'Pendentes' });
+        
+    } else if (categoryId.includes('Equipe')) {
+        let totalPessoas = 0;
+        const cargoCount = {};
+        
+        data.forEach(item => {
+            const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
+            totalPessoas += qty;
+            
+            const cargo = item['Cargo'] || item['Especialidade'] || 'Outros';
+            cargoCount[cargo] = (cargoCount[cargo] || 0) + qty;
+        });
+        
+        metrics.push({ icon: '👥', value: totalPessoas, label: 'Total de Pessoas' });
+        
+        Object.entries(cargoCount).slice(0, 4).forEach(([cargo, count]) => {
+            metrics.push({ icon: '👤', value: count, label: cargo });
+        });
+        
+    } else if (categoryId.includes('Mobiliario')) {
+        let mesas = 0, cadeiras = 0, micros = 0;
+        
+        data.forEach(item => {
+            mesas += parseInt(item['QuantidadeMesa'] || 0);
+            cadeiras += parseInt(item['QuantidadeCadeiras'] || 0);
+            micros += parseInt(item['QuantidadeMicrocomputadores'] || 0);
+        });
+        
+        if (mesas > 0) metrics.push({ icon: '🪑', value: mesas, label: 'Mesas' });
+        if (cadeiras > 0) metrics.push({ icon: '💺', value: cadeiras, label: 'Cadeiras' });
+        if (micros > 0) metrics.push({ icon: '🖥️', value: micros, label: 'Computadores' });
+    }
+    
+    // Render metrics
+    metrics.forEach(metric => {
+        const card = document.createElement('div');
+        card.className = 'metric-card';
+        card.style.setProperty('--metric-color', config.color);
+        card.style.setProperty('--metric-bg', config.bgColor);
+        card.innerHTML = `
+            <div class="metric-header">
+                <div class="metric-icon">${metric.icon}</div>
+            </div>
+            <div class="metric-value">${formatNumber(metric.value)}</div>
+            <div class="metric-label">${metric.label}</div>
+        `;
+        metricsContainer.appendChild(card);
+    });
+}
+
+function buildCategoryCharts(categoryId, data) {
+    const chartsContainer = document.getElementById('category-charts');
+    chartsContainer.innerHTML = '';
+    
+    if (!Array.isArray(data) || data.length === 0) return;
+    
+    // Check if Chart.js is loaded
+    if (!isChartJsLoaded()) {
+        return;
+    }
+    
+    // Destroy existing category charts
+    if (charts.categoryChart1 && typeof charts.categoryChart1.destroy === 'function') {
+        charts.categoryChart1.destroy();
+    }
+    if (charts.categoryChart2 && typeof charts.categoryChart2.destroy === 'function') {
+        charts.categoryChart2.destroy();
+    }
+    
+    const config = dataCategories[categoryId] || { color: '#1a91e7' };
+    
+    // Create chart containers
+    if (categoryId === 'InventarioCeaAC2025' || categoryId === 'SolicitacoesProntuarios') {
+        // Status distribution chart
+        const chartCard = document.createElement('div');
+        chartCard.className = 'chart-card';
+        chartCard.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Distribuição por Status</h3>
+                <span class="chart-subtitle">Análise dos registros</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="categoryStatusChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard);
+        
+        const statusCount = {};
+        data.forEach(item => {
+            const status = item['STATUS'] || 'N/A';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+        });
+        
+        setTimeout(() => {
+            const ctx = document.getElementById('categoryStatusChart');
+            if (ctx) {
+                charts.categoryChart1 = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(statusCount),
+                        datasets: [{
+                            data: Object.values(statusCount),
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#1a91e7'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }, 100);
+    }
+    
+    if (categoryId.includes('Equipe')) {
+        const chartCard = document.createElement('div');
+        chartCard.className = 'chart-card';
+        chartCard.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">Distribuição por Cargo</h3>
+                <span class="chart-subtitle">Quantidade de pessoas por função</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="categoryCargoChart"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard);
+        
+        const cargoCount = {};
+        data.forEach(item => {
+            const cargo = item['Cargo'] || item['Especialidade'] || 'Outros';
+            const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
+            cargoCount[cargo] = (cargoCount[cargo] || 0) + qty;
+        });
+        
+        setTimeout(() => {
+            const ctx = document.getElementById('categoryCargoChart');
+            if (ctx) {
+                charts.categoryChart1 = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(cargoCount),
+                        datasets: [{
+                            data: Object.values(cargoCount),
+                            backgroundColor: ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }, 100);
+    }
+}
+
+function buildCategoryTable(categoryId, data) {
+    const tableContainer = document.getElementById('table-container');
+    tableContainer.innerHTML = '';
+    
+    if (!Array.isArray(data) || data.length === 0) {
+        tableContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <h3>Nenhum dado disponível</h3>
+                <p>Esta categoria não possui registros.</p>
+            </div>
+        `;
+        return;
+    }
     
     const table = document.createElement('table');
-    table.id = 'data-table';
-    
     const thead = document.createElement('thead');
     const tbody = document.createElement('tbody');
     
-    // Obter headers
-    const headers = Object.keys(data[0]);
+    // Get headers (first 8 columns max for better display)
+    const allHeaders = Object.keys(data[0]);
+    const headers = allHeaders.slice(0, 8);
     
-    // Criar cabeçalho
+    // Create header row
     const headerRow = document.createElement('tr');
     headers.forEach(header => {
         const th = document.createElement('th');
-        th.textContent = header;
+        th.textContent = header.length > 25 ? header.substring(0, 25) + '...' : header;
+        th.title = header;
         headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
     
-    // Criar linhas de dados (limitado a 100 para performance)
+    // Create data rows (limit to 100 for performance)
     const displayData = data.slice(0, 100);
     displayData.forEach(row => {
         const tr = document.createElement('tr');
@@ -301,35 +941,29 @@ function displayTabContent(category) {
             const td = document.createElement('td');
             let value = row[header];
             
-            // Formatar valores especiais
+            // Format value
             if (value === null || value === undefined || value === '') {
                 value = '-';
             } else if (typeof value === 'boolean') {
                 value = value ? 'Sim' : 'Não';
             } else if (typeof value === 'string' && value.includes('T') && value.includes('Z')) {
-                // Formatar data ISO
                 try {
                     const date = new Date(value);
                     if (!isNaN(date.getTime())) {
                         value = date.toLocaleDateString('pt-BR');
                     }
-                } catch (e) {
-                    // Manter valor original se falhar
-                }
+                } catch (e) { /* keep original */ }
             }
             
-            td.textContent = value;
-            
-            // Aplicar estilo para status
+            // Apply status badge
             if (header === 'STATUS' || header === 'Status') {
-                td.classList.add('status-cell');
-                if (value === 'PENDENTE' || value === 'Pendente') {
-                    td.classList.add('status-pending');
-                } else if (value === 'ENVIADO' || value === 'Enviado' || value === 'Finalizado') {
-                    td.classList.add('status-sent');
-                } else if (value === 'EM USO' || value === 'Em uso') {
-                    td.classList.add('status-in-use');
-                }
+                const statusClass = getStatusClass(value);
+                td.innerHTML = `<span class="status-badge ${statusClass}">${value}</span>`;
+            } else {
+                td.textContent = typeof value === 'string' && value.length > 50 
+                    ? value.substring(0, 50) + '...' 
+                    : value;
+                td.title = value;
             }
             
             tr.appendChild(td);
@@ -341,129 +975,69 @@ function displayTabContent(category) {
     table.appendChild(tbody);
     tableContainer.appendChild(table);
     
-    // Mostrar mensagem se houver mais dados
+    // Add footer if there's more data
     if (data.length > 100) {
-        const moreDataMsg = document.createElement('p');
-        moreDataMsg.className = 'more-data-msg';
-        moreDataMsg.textContent = `Mostrando 100 de ${data.length} registros.`;
-        tableContainer.appendChild(moreDataMsg);
+        const footer = document.createElement('div');
+        footer.className = 'table-footer';
+        footer.innerHTML = `
+            <span>Mostrando 100 de ${formatNumber(data.length)} registros</span>
+            <span>Para ver todos os dados, exporte para planilha</span>
+        `;
+        tableContainer.appendChild(footer);
     }
     
-    tabContent.appendChild(tableContainer);
+    // Setup search
+    setupTableSearch();
 }
 
-// Função para criar cards específicos de cada categoria
-function createCategoryCards(data, category, container) {
-    const cards = [];
-    
-    // Card com total de registros
-    cards.push(createCard('📋', data.length, 'Total de Registros'));
-    
-    // Cards específicos baseados na categoria
-    if (category === 'InventarioCeaAC2025') {
-        // Contar por status
-        const statusCount = {};
-        const setorCount = {};
-        const andarCount = {};
-        
-        data.forEach(item => {
-            const status = item['STATUS'] || 'N/A';
-            const setor = item['SETOR'] || 'N/A';
-            const andar = item['ANDAR'] || 'N/A';
-            
-            statusCount[status] = (statusCount[status] || 0) + 1;
-            setorCount[setor] = (setorCount[setor] || 0) + 1;
-            andarCount[andar] = (andarCount[andar] || 0) + 1;
-        });
-        
-        // Top setores
-        const topSetores = Object.entries(setorCount)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3);
-        
-        topSetores.forEach((item, index) => {
-            const icons = ['🥇', '🥈', '🥉'];
-            cards.push(createCard(icons[index], item[1], `Setor: ${item[0]}`));
-        });
-        
-    } else if (category === 'SolicitacoesProntuarios') {
-        // Contar por status
-        const statusCount = {};
-        const especialidadeCount = {};
-        
-        data.forEach(item => {
-            const status = item['STATUS'] || 'N/A';
-            const especialidade = item['ESPECIALIDADE ASSISTENCIAL:'] || item['ESPECIALIDADE MEDICINA DO TRABALHO:'] || 'N/A';
-            
-            statusCount[status] = (statusCount[status] || 0) + 1;
-            if (especialidade && especialidade !== 'N/A' && especialidade !== '') {
-                especialidadeCount[especialidade] = (especialidadeCount[especialidade] || 0) + 1;
-            }
-        });
-        
-        Object.entries(statusCount).forEach(([status, count]) => {
-            const icon = status === 'ENVIADO' ? '✅' : status === 'PENDENTE' ? '⏳' : '📄';
-            cards.push(createCard(icon, count, status));
-        });
-        
-    } else if (category.includes('Equipe')) {
-        // Somar total de pessoas
-        let totalPessoas = 0;
-        const cargoCount = {};
-        
-        data.forEach(item => {
-            const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
-            totalPessoas += qty;
-            
-            const cargo = item['Cargo'] || item['Especialidade'] || 'N/A';
-            cargoCount[cargo] = (cargoCount[cargo] || 0) + qty;
-        });
-        
-        cards.push(createCard('👥', totalPessoas, 'Total de Pessoas'));
-        
-    } else if (category.includes('Mobiliario')) {
-        // Somar mobiliários
-        let totalMesas = 0;
-        let totalCadeiras = 0;
-        let totalMicros = 0;
-        
-        data.forEach(item => {
-            totalMesas += parseInt(item['QuantidadeMesa'] || 0);
-            totalCadeiras += parseInt(item['QuantidadeCadeiras'] || 0);
-            totalMicros += parseInt(item['QuantidadeMicrocomputadores'] || 0);
-        });
-        
-        if (totalMesas > 0) cards.push(createCard('🪑', totalMesas, 'Mesas'));
-        if (totalCadeiras > 0) cards.push(createCard('💺', totalCadeiras, 'Cadeiras'));
-        if (totalMicros > 0) cards.push(createCard('🖥️', totalMicros, 'Computadores'));
+function getStatusClass(status) {
+    const statusLower = (status || '').toLowerCase();
+    if (statusLower === 'enviado' || statusLower === 'finalizado' || statusLower === 'em uso') {
+        return 'success';
+    } else if (statusLower === 'pendente') {
+        return 'warning';
+    } else if (statusLower === 'erro' || statusLower === 'cancelado') {
+        return 'danger';
     }
+    return 'info';
+}
+
+function setupTableSearch() {
+    const searchInput = document.getElementById('table-search');
+    if (!searchInput) return;
     
-    cards.forEach(card => container.appendChild(card));
+    // Remove existing listener by replacing the element with a clone
+    const newSearchInput = searchInput.cloneNode(true);
+    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+    
+    newSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#table-container tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
 }
 
-// Função para criar um card
-function createCard(icon, value, label) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-        <div class="card-icon">${icon}</div>
-        <div class="card-value">${value}</div>
-        <div class="card-label">${label}</div>
-    `;
-    return card;
-}
+// =====================================================
+// Utility Functions
+// =====================================================
 
-// Função para formatar números
 function formatNumber(num) {
+    if (num === null || num === undefined) return '0';
+    num = parseInt(num);
+    if (isNaN(num)) return '0';
+    
     if (num >= 1000000) {
         return (num / 1000000).toFixed(1) + 'M';
     } else if (num >= 1000) {
         return (num / 1000).toFixed(1) + 'K';
     }
-    return num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    return num.toLocaleString('pt-BR');
 }
 
-// Funções de controle de exibição
 function showLoading() {
     loadingElement.style.display = 'flex';
     errorElement.style.display = 'none';
@@ -482,5 +1056,46 @@ function showDashboard() {
     dashboardElement.style.display = 'block';
 }
 
-// Carregar dados quando a página carregar
+// =====================================================
+// Mobile Menu Toggle
+// =====================================================
+
+if (menuToggle) {
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        
+        // Create/toggle overlay
+        let overlay = document.querySelector('.sidebar-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            });
+        }
+        overlay.classList.toggle('active');
+    });
+}
+
+// Track viewport size for mobile detection
+let isMobileView = window.innerWidth < 992;
+window.addEventListener('resize', () => {
+    isMobileView = window.innerWidth < 992;
+});
+
+// Close sidebar on nav item click (mobile)
+sidebarNav.addEventListener('click', (e) => {
+    if (isMobileView && e.target.closest('.nav-item')) {
+        sidebar.classList.remove('open');
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (overlay) overlay.classList.remove('active');
+    }
+});
+
+// =====================================================
+// Initialize
+// =====================================================
+
 document.addEventListener('DOMContentLoaded', loadData);
