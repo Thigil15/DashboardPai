@@ -3,50 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard CeAC</title>
+    <title>Dashboard CeAC - Hospital das Clínicas</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>📊 Dashboard CeAC</h1>
-            <p class="subtitle">Visualização de Dados do Banco de Dados</p>
-        </header>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Carregando dados...</p>
-        </div>
-
-        <div class="error-message" id="error" style="display: none;">
-            <p>❌ Erro ao carregar os dados. Por favor, tente novamente.</p>
-            <button onclick="loadData()">Tentar Novamente</button>
-        </div>
-
-        <div class="dashboard" id="dashboard" style="display: none;">
-            <section class="summary-section">
-                <h2 class="section-title">📈 Resumo Geral</h2>
-                <div class="cards-container" id="cards-container">
-                    <!-- Cards de resumo geral serão inseridos aqui via JavaScript -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">🏥</div>
+                <div class="logo-text">
+                    <span class="logo-title">Hospital das Clínicas</span>
+                    <span class="logo-subtitle">CeAC Dashboard</span>
                 </div>
-            </section>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav">
+                <!-- Navigation items will be inserted via JavaScript -->
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-info">
+                    <span class="info-label">Última atualização</span>
+                    <span class="info-value" id="last-update">--</span>
+                </div>
+            </div>
+        </aside>
 
-            <section class="data-section">
-                <h2 class="section-title">📂 Dados por Categoria</h2>
-                <div class="tabs-wrapper">
-                    <div class="tabs-container" id="tabs-container">
-                        <!-- Tabs serão inseridas aqui via JavaScript -->
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">☰</button>
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">Dashboard</span>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-item active" id="current-section">Visão Geral</span>
                     </div>
                 </div>
-                <div class="tab-content" id="tab-content">
-                    <!-- Conteúdo das tabs será inserido aqui via JavaScript -->
+                <div class="header-right">
+                    <div class="header-stats" id="header-stats">
+                        <!-- Quick stats will be inserted here -->
+                    </div>
                 </div>
-            </section>
-        </div>
+            </header>
+
+            <div class="content-area">
+                <div class="loading" id="loading">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <p>Carregando dados...</p>
+                        <span class="loading-subtitle">Por favor, aguarde</span>
+                    </div>
+                </div>
+
+                <div class="error-message" id="error" style="display: none;">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Erro ao carregar os dados</h3>
+                    <p>Não foi possível carregar as informações. Verifique sua conexão.</p>
+                    <button class="btn-primary" onclick="loadData()">Tentar Novamente</button>
+                </div>
+
+                <div class="dashboard" id="dashboard" style="display: none;">
+                    <!-- Overview Section -->
+                    <section class="dashboard-section" id="overview-section">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <span class="section-icon">📊</span>
+                                Visão Geral
+                            </h2>
+                            <span class="section-badge" id="total-records-badge">0 registros</span>
+                        </div>
+                        
+                        <div class="metrics-grid" id="metrics-grid">
+                            <!-- Metric cards will be inserted here -->
+                        </div>
+
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Inventário por Status</h3>
+                                    <span class="chart-subtitle">Distribuição de itens</span>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="inventoryStatusChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Solicitações de Prontuários</h3>
+                                    <span class="chart-subtitle">Status das solicitações</span>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="requestsStatusChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card chart-wide">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Inventário por Setor</h3>
+                                    <span class="chart-subtitle">Top 10 setores com mais itens</span>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="inventorySectorChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Inventário por Andar</h3>
+                                    <span class="chart-subtitle">Distribuição por pavimento</span>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="inventoryFloorChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Especialidades Mais Solicitadas</h3>
+                                    <span class="chart-subtitle">Prontuários por especialidade</span>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="specialtiesChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Category Section (shown when a category is selected) -->
+                    <section class="dashboard-section" id="category-section" style="display: none;">
+                        <div class="section-header">
+                            <h2 class="section-title" id="category-title">
+                                <span class="section-icon">📂</span>
+                                <span id="category-name">Categoria</span>
+                            </h2>
+                            <span class="section-badge" id="category-records-badge">0 registros</span>
+                        </div>
+
+                        <div class="category-metrics" id="category-metrics">
+                            <!-- Category specific metrics -->
+                        </div>
+
+                        <div class="category-charts" id="category-charts">
+                            <!-- Category specific charts -->
+                        </div>
+
+                        <div class="data-table-section">
+                            <div class="table-header">
+                                <h3 class="table-title">Dados Detalhados</h3>
+                                <div class="table-controls">
+                                    <div class="search-box">
+                                        <input type="text" id="table-search" placeholder="Buscar...">
+                                        <span class="search-icon">🔍</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-container" id="table-container">
+                                <!-- Table will be inserted here -->
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <footer class="footer">
-        <p>Desenvolvido com ❤️ | Dashboard CeAC</p>
+    <footer class="app-footer">
+        <div class="footer-content">
+            <span class="footer-logo">🏥</span>
+            <span class="footer-text">Hospital das Clínicas - Centro de Atenção ao Colaborador (CeAC)</span>
+            <span class="footer-divider">|</span>
+            <span class="footer-copyright">© 2025 - Todos os direitos reservados</span>
+        </div>
     </footer>
 
     <script src="js/script.js"></script>
