@@ -428,10 +428,11 @@ function buildOverviewCharts() {
     });
     charts = {};
     
+    const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
     const inventario = allData['InventarioCeaAC2025'] || [];
     const solicitacoes = allData['SolicitacoesProntuarios'] || [];
     
-    // Chart 1: Inventory Status
+    // Chart 1: Inventory Status (Pie)
     const statusCount = {};
     inventario.forEach(item => {
         const status = item['STATUS'] || 'N/A';
@@ -441,27 +442,35 @@ function buildOverviewCharts() {
     const statusCtx = document.getElementById('inventoryStatusChart');
     if (statusCtx) {
         charts.inventoryStatus = new Chart(statusCtx, {
-            type: 'doughnut',
+            type: 'pie',
             data: {
                 labels: Object.keys(statusCount),
                 datasets: [{
                     data: Object.values(statusCount),
-                    backgroundColor: ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                    borderWidth: 0,
-                    hoverOffset: 4
+                    backgroundColor: chartColors.slice(0, Object.keys(statusCount).length),
+                    borderWidth: 2,
+                    borderColor: '#fff'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '60%',
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            padding: 20,
+                            padding: 15,
                             usePointStyle: true,
                             pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
                         }
                     }
                 }
@@ -469,7 +478,7 @@ function buildOverviewCharts() {
         });
     }
     
-    // Chart 2: Requests Status
+    // Chart 2: Requests Status (Pie)
     const requestStatusCount = {};
     solicitacoes.forEach(item => {
         const status = item['STATUS'] || 'N/A';
@@ -477,29 +486,37 @@ function buildOverviewCharts() {
     });
     
     const requestsCtx = document.getElementById('requestsStatusChart');
-    if (requestsCtx) {
+    if (requestsCtx && Object.keys(requestStatusCount).length > 0) {
         charts.requestsStatus = new Chart(requestsCtx, {
-            type: 'doughnut',
+            type: 'pie',
             data: {
                 labels: Object.keys(requestStatusCount),
                 datasets: [{
                     data: Object.values(requestStatusCount),
-                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                    borderWidth: 0,
-                    hoverOffset: 4
+                    backgroundColor: chartColors.slice(0, Object.keys(requestStatusCount).length),
+                    borderWidth: 2,
+                    borderColor: '#fff'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '60%',
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            padding: 20,
+                            padding: 15,
                             usePointStyle: true,
                             pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
                         }
                     }
                 }
@@ -507,7 +524,7 @@ function buildOverviewCharts() {
         });
     }
     
-    // Chart 3: Inventory by Sector (Bar Chart)
+    // Chart 3: Inventory by Sector (Pie - Top 10)
     const sectorCount = {};
     inventario.forEach(item => {
         const setor = item['SETOR'] || 'N/A';
@@ -520,42 +537,38 @@ function buildOverviewCharts() {
         .slice(0, 10);
     
     const sectorCtx = document.getElementById('inventorySectorChart');
-    if (sectorCtx) {
+    if (sectorCtx && topSectors.length > 0) {
         charts.inventorySector = new Chart(sectorCtx, {
-            type: 'bar',
+            type: 'pie',
             data: {
                 labels: topSectors.map(s => s[0]),
                 datasets: [{
-                    label: 'Quantidade de Itens',
                     data: topSectors.map(s => s[1]),
-                    backgroundColor: 'rgba(26, 145, 231, 0.8)',
-                    borderColor: '#1a91e7',
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    barThickness: 30
+                    backgroundColor: chartColors.slice(0, topSectors.length),
+                    borderWidth: 2,
+                    borderColor: '#fff'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                indexAxis: 'y',
                 plugins: {
                     legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            precision: 0
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { size: 10 }
                         }
                     },
-                    y: {
-                        grid: {
-                            display: false
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
                         }
                     }
                 }
@@ -563,7 +576,7 @@ function buildOverviewCharts() {
         });
     }
     
-    // Chart 4: Inventory by Floor
+    // Chart 4: Inventory by Floor (Pie)
     const floorCount = {};
     inventario.forEach(item => {
         const andar = item['ANDAR'] || 'N/A';
@@ -578,10 +591,7 @@ function buildOverviewCharts() {
                 labels: Object.keys(floorCount),
                 datasets: [{
                     data: Object.values(floorCount),
-                    backgroundColor: [
-                        '#1a91e7', '#10b981', '#f59e0b', '#ef4444', 
-                        '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'
-                    ],
+                    backgroundColor: chartColors.slice(0, Object.keys(floorCount).length),
                     borderWidth: 2,
                     borderColor: '#ffffff'
                 }]
@@ -597,13 +607,22 @@ function buildOverviewCharts() {
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
+                        }
                     }
                 }
             }
         });
     }
     
-    // Chart 5: Top Specialties
+    // Chart 5: Top Specialties (Pie)
     const specialtyCount = {};
     solicitacoes.forEach(item => {
         const esp = item['ESPECIALIDADE ASSISTENCIAL:'] || item['ESPECIALIDADE MEDICINA DO TRABALHO:'];
@@ -617,18 +636,16 @@ function buildOverviewCharts() {
         .slice(0, 8);
     
     const specialtiesCtx = document.getElementById('specialtiesChart');
-    if (specialtiesCtx) {
+    if (specialtiesCtx && topSpecialties.length > 0) {
         charts.specialties = new Chart(specialtiesCtx, {
-            type: 'bar',
+            type: 'pie',
             data: {
-                labels: topSpecialties.map(s => s[0].length > 20 ? s[0].substring(0, 20) + '...' : s[0]),
+                labels: topSpecialties.map(s => s[0].length > 15 ? s[0].substring(0, 15) + '...' : s[0]),
                 datasets: [{
-                    label: 'Solicitações',
                     data: topSpecialties.map(s => s[1]),
-                    backgroundColor: 'rgba(139, 92, 246, 0.8)',
-                    borderColor: '#8b5cf6',
-                    borderWidth: 1,
-                    borderRadius: 6
+                    backgroundColor: chartColors.slice(0, topSpecialties.length),
+                    borderWidth: 2,
+                    borderColor: '#fff'
                 }]
             },
             options: {
@@ -636,21 +653,21 @@ function buildOverviewCharts() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { size: 10 }
                         }
                     },
-                    y: {
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        },
-                        ticks: {
-                            precision: 0
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
                         }
                     }
                 }
@@ -687,96 +704,9 @@ function showCategory(categoryId) {
 }
 
 function buildCategoryMetrics(categoryId, data) {
+    // Clear metrics container - we'll use charts only
     const metricsContainer = document.getElementById('category-metrics');
     metricsContainer.innerHTML = '';
-    
-    if (!Array.isArray(data) || data.length === 0) return;
-    
-    const config = dataCategories[categoryId] || { color: '#1a91e7', bgColor: '#e8f4fd' };
-    
-    // Create metrics based on category type
-    let metrics = [];
-    
-    if (categoryId === 'InventarioCeaAC2025') {
-        const statusCount = {};
-        const patrimonioCount = {};
-        
-        data.forEach(item => {
-            const status = item['STATUS'] || 'N/A';
-            const patrimonio = item['PATRIMÔNIOS - CeAC'] || 'N/A';
-            statusCount[status] = (statusCount[status] || 0) + 1;
-            patrimonioCount[patrimonio] = (patrimonioCount[patrimonio] || 0) + 1;
-        });
-        
-        Object.entries(statusCount).forEach(([status, count]) => {
-            metrics.push({ icon: status === 'EM USO' ? '✅' : '📋', value: count, label: status });
-        });
-        
-    } else if (categoryId === 'SolicitacoesProntuarios') {
-        const statusCount = {};
-        const tipoCount = {};
-        
-        data.forEach(item => {
-            const status = item['STATUS'] || 'N/A';
-            statusCount[status] = (statusCount[status] || 0) + 1;
-            
-            const tipo = item['SOLICITAÇÃO:'] || 'N/A';
-            if (tipo !== 'N/A') {
-                const shortTipo = tipo.split(' - ')[0];
-                tipoCount[shortTipo] = (tipoCount[shortTipo] || 0) + 1;
-            }
-        });
-        
-        metrics.push({ icon: '✅', value: statusCount['ENVIADO'] || 0, label: 'Enviados' });
-        metrics.push({ icon: '⏳', value: statusCount['PENDENTE'] || 0, label: 'Pendentes' });
-        
-    } else if (categoryId.includes('Equipe')) {
-        let totalPessoas = 0;
-        const cargoCount = {};
-        
-        data.forEach(item => {
-            const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
-            totalPessoas += qty;
-            
-            const cargo = item['Cargo'] || item['Especialidade'] || 'Outros';
-            cargoCount[cargo] = (cargoCount[cargo] || 0) + qty;
-        });
-        
-        metrics.push({ icon: '👥', value: totalPessoas, label: 'Total de Pessoas' });
-        
-        Object.entries(cargoCount).slice(0, 4).forEach(([cargo, count]) => {
-            metrics.push({ icon: '👤', value: count, label: cargo });
-        });
-        
-    } else if (categoryId.includes('Mobiliario')) {
-        let mesas = 0, cadeiras = 0, micros = 0;
-        
-        data.forEach(item => {
-            mesas += parseInt(item['QuantidadeMesa'] || 0);
-            cadeiras += parseInt(item['QuantidadeCadeiras'] || 0);
-            micros += parseInt(item['QuantidadeMicrocomputadores'] || 0);
-        });
-        
-        if (mesas > 0) metrics.push({ icon: '🪑', value: mesas, label: 'Mesas' });
-        if (cadeiras > 0) metrics.push({ icon: '💺', value: cadeiras, label: 'Cadeiras' });
-        if (micros > 0) metrics.push({ icon: '🖥️', value: micros, label: 'Computadores' });
-    }
-    
-    // Render metrics
-    metrics.forEach(metric => {
-        const card = document.createElement('div');
-        card.className = 'metric-card';
-        card.style.setProperty('--metric-color', config.color);
-        card.style.setProperty('--metric-bg', config.bgColor);
-        card.innerHTML = `
-            <div class="metric-header">
-                <div class="metric-icon">${metric.icon}</div>
-            </div>
-            <div class="metric-value">${formatNumber(metric.value)}</div>
-            <div class="metric-label">${metric.label}</div>
-        `;
-        metricsContainer.appendChild(card);
-    });
 }
 
 function buildCategoryCharts(categoryId, data) {
@@ -791,99 +721,137 @@ function buildCategoryCharts(categoryId, data) {
     }
     
     // Destroy existing category charts
-    if (charts.categoryChart1 && typeof charts.categoryChart1.destroy === 'function') {
-        charts.categoryChart1.destroy();
-    }
-    if (charts.categoryChart2 && typeof charts.categoryChart2.destroy === 'function') {
-        charts.categoryChart2.destroy();
-    }
-    if (charts.categoryChart3 && typeof charts.categoryChart3.destroy === 'function') {
-        charts.categoryChart3.destroy();
+    for (let i = 1; i <= 10; i++) {
+        if (charts['categoryChart' + i] && typeof charts['categoryChart' + i].destroy === 'function') {
+            charts['categoryChart' + i].destroy();
+        }
     }
     
-    const config = dataCategories[categoryId] || { color: '#1a91e7' };
     const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
+    let chartIndex = 1;
     
-    // Create chart containers
-    if (categoryId === 'InventarioCeaAC2025' || categoryId === 'SolicitacoesProntuarios') {
-        // Status distribution chart
+    // Helper function to create a pie chart
+    function createPieChart(title, subtitle, canvasId, labels, dataValues) {
         const chartCard = document.createElement('div');
         chartCard.className = 'chart-card';
         chartCard.innerHTML = `
             <div class="chart-header">
-                <h3 class="chart-title">Distribuição por Status</h3>
-                <span class="chart-subtitle">Análise dos registros</span>
+                <h3 class="chart-title">${title}</h3>
+                <span class="chart-subtitle">${subtitle}</span>
             </div>
             <div class="chart-body">
-                <canvas id="categoryStatusChart"></canvas>
+                <canvas id="${canvasId}"></canvas>
             </div>
         `;
         chartsContainer.appendChild(chartCard);
         
-        const statusCount = {};
-        data.forEach(item => {
-            const status = item['STATUS'] || 'N/A';
-            statusCount[status] = (statusCount[status] || 0) + 1;
-        });
-        
         setTimeout(() => {
-            const ctx = document.getElementById('categoryStatusChart');
-            if (ctx) {
-                charts.categoryChart1 = new Chart(ctx, {
-                    type: 'doughnut',
+            const ctx = document.getElementById(canvasId);
+            if (ctx && labels.length > 0) {
+                charts['categoryChart' + chartIndex] = new Chart(ctx, {
+                    type: 'pie',
                     data: {
-                        labels: Object.keys(statusCount),
+                        labels: labels,
                         datasets: [{
-                            data: Object.values(statusCount),
-                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#1a91e7'],
-                            borderWidth: 0
+                            data: dataValues,
+                            backgroundColor: chartColors.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#fff'
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '60%',
                         plugins: {
                             legend: {
-                                position: 'bottom'
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                                        return `${context.label}: ${context.raw} (${percentage}%)`;
+                                    }
+                                }
                             }
                         }
                     }
                 });
+                chartIndex++;
             }
         }, 100);
     }
     
-    // WS Engenharia - Equipe: People by current location
+    // Inventory - Status pie chart
+    if (categoryId === 'InventarioCeaAC2025') {
+        const statusCount = {};
+        const setorCount = {};
+        const andarCount = {};
+        const patrimonioCount = {};
+        
+        data.forEach(item => {
+            const status = item['STATUS'] || 'N/A';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+            
+            const setor = item['SETOR'] || 'N/A';
+            setorCount[setor] = (setorCount[setor] || 0) + 1;
+            
+            const andar = item['ANDAR'] || 'N/A';
+            andarCount[andar] = (andarCount[andar] || 0) + 1;
+            
+            const patrimonio = item['PATRIMÔNIOS - CeAC'] || 'N/A';
+            patrimonioCount[patrimonio] = (patrimonioCount[patrimonio] || 0) + 1;
+        });
+        
+        createPieChart('Inventário por Status', 'Distribuição dos itens por status', 'inventarioStatusPie', Object.keys(statusCount), Object.values(statusCount));
+        createPieChart('Inventário por Andar', 'Distribuição dos itens por andar', 'inventarioAndarPie', Object.keys(andarCount), Object.values(andarCount));
+        createPieChart('Inventário por Tipo de Patrimônio', 'Tipos de patrimônio', 'inventarioPatrimonioPie', Object.keys(patrimonioCount), Object.values(patrimonioCount));
+        
+        // Top 8 sectors
+        const topSetores = Object.entries(setorCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        createPieChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorPie', topSetores.map(s => s[0]), topSetores.map(s => s[1]));
+    }
+    
+    // Solicitações - Status pie chart
+    if (categoryId === 'SolicitacoesProntuarios') {
+        const statusCount = {};
+        const tipoCount = {};
+        const especialidadeCount = {};
+        
+        data.forEach(item => {
+            const status = item['STATUS'] || 'N/A';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+            
+            const tipo = item['SOLICITAÇÃO:'] || 'N/A';
+            if (tipo !== 'N/A') {
+                const shortTipo = tipo.split(' - ')[0];
+                tipoCount[shortTipo] = (tipoCount[shortTipo] || 0) + 1;
+            }
+            
+            const esp = item['ESPECIALIDADE ASSISTENCIAL:'] || item['ESPECIALIDADE MEDICINA DO TRABALHO:'];
+            if (esp && esp !== '') {
+                especialidadeCount[esp] = (especialidadeCount[esp] || 0) + 1;
+            }
+        });
+        
+        createPieChart('Solicitações por Status', 'Distribuição por status', 'solicitacoesStatusPie', Object.keys(statusCount), Object.values(statusCount));
+        createPieChart('Solicitações por Tipo', 'Tipos de solicitação', 'solicitacoesTipoPie', Object.keys(tipoCount), Object.values(tipoCount));
+        
+        // Top 8 especialidades
+        const topEsp = Object.entries(especialidadeCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        if (topEsp.length > 0) {
+            createPieChart('Top 8 Especialidades', 'Especialidades mais solicitadas', 'solicitacoesEspPie', topEsp.map(s => s[0]), topEsp.map(s => s[1]));
+        }
+    }
+    
+    // WS Engenharia - Equipe
     if (categoryId === 'WSEngenhariaEquipe') {
-        // Chart 1: People by Current Location (Bar Chart)
-        const chartCard1 = document.createElement('div');
-        chartCard1.className = 'chart-card';
-        chartCard1.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Quantidade de Pessoas por Local Atual</h3>
-                <span class="chart-subtitle">Distribuição da equipe por instituto</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="wsEquipeLocalChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard1);
-        
-        // Chart 2: Pie chart for proportion
-        const chartCard2 = document.createElement('div');
-        chartCard2.className = 'chart-card';
-        chartCard2.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Proporção por Instituto</h3>
-                <span class="chart-subtitle">Percentual de prestadores por local</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="wsEquipePieChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard2);
-        
         const localCount = {};
         data.forEach(item => {
             const local = item['LocalAtualInstituto'] || 'N/A';
@@ -891,272 +859,62 @@ function buildCategoryCharts(categoryId, data) {
             localCount[local] = (localCount[local] || 0) + qty;
         });
         
-        setTimeout(() => {
-            const ctx1 = document.getElementById('wsEquipeLocalChart');
-            if (ctx1) {
-                charts.categoryChart1 = new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(localCount),
-                        datasets: [{
-                            label: 'Quantidade de Prestadores',
-                            data: Object.values(localCount),
-                            backgroundColor: chartColors.slice(0, Object.keys(localCount).length),
-                            borderRadius: 6,
-                            barThickness: 40
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { precision: 0 }
-                            }
-                        }
-                    }
-                });
-            }
-            
-            const ctx2 = document.getElementById('wsEquipePieChart');
-            if (ctx2) {
-                charts.categoryChart2 = new Chart(ctx2, {
-                    type: 'pie',
-                    data: {
-                        labels: Object.keys(localCount),
-                        datasets: [{
-                            data: Object.values(localCount),
-                            backgroundColor: chartColors.slice(0, Object.keys(localCount).length),
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        }
-                    }
-                });
-            }
-        }, 100);
+        createPieChart('Pessoas por Instituto', 'Quantidade de prestadores por local atual', 'wsEquipePie', Object.keys(localCount), Object.values(localCount));
     }
     
-    // WS Engenharia - Mobiliários: Furniture by Instituto
+    // WS Engenharia - Mobiliários
     if (categoryId === 'WSEngenhariaMobiliarios ') {
-        // Chart 1: Stacked bar chart for furniture types
-        const chartCard1 = document.createElement('div');
-        chartCard1.className = 'chart-card chart-wide';
-        chartCard1.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Mobiliário por Instituto</h3>
-                <span class="chart-subtitle">Distribuição de mesas, cadeiras e equipamentos</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="wsMobiliarioBarChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard1);
+        // By Instituto
+        const institutoTotals = {};
+        let totalMesas = 0, totalCadeiras = 0, totalMicros = 0, totalImpressoras = 0, totalGaveteiros = 0, totalArmarios = 0;
         
-        // Chart 2: Pie chart for total items
-        const chartCard2 = document.createElement('div');
-        chartCard2.className = 'chart-card';
-        chartCard2.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Total de Itens por Instituto</h3>
-                <span class="chart-subtitle">Soma de todos os itens</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="wsMobiliarioPieChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard2);
-        
-        const institutos = data.map(item => item['Instituto'] || 'N/A');
-        const mesas = data.map(item => parseInt(item['QuantidadeMesa'] || 0));
-        const cadeiras = data.map(item => parseInt(item['QuantidadeCadeiras'] || 0));
-        const micros = data.map(item => parseInt(item['QuantidadeMicrocomputadores'] || 0));
-        const totais = data.map(item => 
-            parseInt(item['QuantidadeMesa'] || 0) + 
-            parseInt(item['QuantidadeCadeiras'] || 0) + 
-            parseInt(item['QuantidadeMicrocomputadores'] || 0)
-        );
-        
-        setTimeout(() => {
-            const ctx1 = document.getElementById('wsMobiliarioBarChart');
-            if (ctx1) {
-                charts.categoryChart1 = new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: institutos,
-                        datasets: [
-                            {
-                                label: 'Mesas',
-                                data: mesas,
-                                backgroundColor: '#1a91e7',
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Cadeiras',
-                                data: cadeiras,
-                                backgroundColor: '#10b981',
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Microcomputadores',
-                                data: micros,
-                                backgroundColor: '#f59e0b',
-                                borderRadius: 4
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'top' }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { precision: 0 }
-                            }
-                        }
-                    }
-                });
-            }
+        data.forEach(item => {
+            const instituto = item['Instituto'] || 'N/A';
+            const total = parseInt(item['QuantidadeMesa'] || 0) + 
+                          parseInt(item['QuantidadeCadeiras'] || 0) + 
+                          parseInt(item['QuantidadeMicrocomputadores'] || 0);
+            institutoTotals[instituto] = (institutoTotals[instituto] || 0) + total;
             
-            const ctx2 = document.getElementById('wsMobiliarioPieChart');
-            if (ctx2) {
-                charts.categoryChart2 = new Chart(ctx2, {
-                    type: 'doughnut',
-                    data: {
-                        labels: institutos,
-                        datasets: [{
-                            data: totais,
-                            backgroundColor: chartColors.slice(0, institutos.length),
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '50%',
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        }
-                    }
-                });
-            }
-        }, 100);
+            totalMesas += parseInt(item['QuantidadeMesa'] || 0);
+            totalCadeiras += parseInt(item['QuantidadeCadeiras'] || 0);
+            totalMicros += parseInt(item['QuantidadeMicrocomputadores'] || 0);
+            totalImpressoras += parseInt(item['QuantidadeImpressora'] || 0);
+            totalGaveteiros += parseInt(item['Quantidadegaveteiro'] || 0);
+            totalArmarios += parseInt(item['QuantidadeArmário'] || 0);
+        });
+        
+        createPieChart('Itens por Instituto', 'Total de mobiliário por instituto', 'wsMobInstitutoPie', Object.keys(institutoTotals), Object.values(institutoTotals));
+        
+        const tipoItems = {};
+        if (totalMesas > 0) tipoItems['Mesas'] = totalMesas;
+        if (totalCadeiras > 0) tipoItems['Cadeiras'] = totalCadeiras;
+        if (totalMicros > 0) tipoItems['Microcomputadores'] = totalMicros;
+        if (totalImpressoras > 0) tipoItems['Impressoras'] = totalImpressoras;
+        if (totalGaveteiros > 0) tipoItems['Gaveteiros'] = totalGaveteiros;
+        if (totalArmarios > 0) tipoItems['Armários'] = totalArmarios;
+        
+        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo de item', 'wsMobTipoPie', Object.keys(tipoItems), Object.values(tipoItems));
     }
     
-    // Psicologia - Equipe: People by specialty and location
+    // Psicologia - Equipe
     if (categoryId === 'PsicologiaEquipe') {
-        // Chart 1: Bar chart by specialty
-        const chartCard1 = document.createElement('div');
-        chartCard1.className = 'chart-card';
-        chartCard1.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Quantidade por Especialidade</h3>
-                <span class="chart-subtitle">Distribuição da equipe de psicologia</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="psicologiaEspChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard1);
-        
-        // Chart 2: Pie chart
-        const chartCard2 = document.createElement('div');
-        chartCard2.className = 'chart-card';
-        chartCard2.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Proporção por Especialidade</h3>
-                <span class="chart-subtitle">Percentual da equipe</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="psicologiaPieChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard2);
-        
         const espCount = {};
+        const localCount = {};
         data.forEach(item => {
             const esp = item['Especialidade'] || 'N/A';
             const qty = parseInt(item['QuantidadePessoas'] || 0);
             espCount[esp] = (espCount[esp] || 0) + qty;
+            
+            const local = item['LocalAtual'] || 'N/A';
+            localCount[local] = (localCount[local] || 0) + qty;
         });
         
-        setTimeout(() => {
-            const ctx1 = document.getElementById('psicologiaEspChart');
-            if (ctx1) {
-                charts.categoryChart1 = new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(espCount),
-                        datasets: [{
-                            label: 'Quantidade de Pessoas',
-                            data: Object.values(espCount),
-                            backgroundColor: ['#06b6d4', '#14b8a6'],
-                            borderRadius: 6,
-                            barThickness: 50
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { precision: 0 } }
-                        }
-                    }
-                });
-            }
-            
-            const ctx2 = document.getElementById('psicologiaPieChart');
-            if (ctx2) {
-                charts.categoryChart2 = new Chart(ctx2, {
-                    type: 'pie',
-                    data: {
-                        labels: Object.keys(espCount),
-                        datasets: [{
-                            data: Object.values(espCount),
-                            backgroundColor: ['#06b6d4', '#14b8a6'],
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-        }, 100);
+        createPieChart('Pessoas por Especialidade', 'Distribuição da equipe', 'psicologiaEspPie', Object.keys(espCount), Object.values(espCount));
+        createPieChart('Pessoas por Local', 'Local atual da equipe', 'psicologiaLocalPie', Object.keys(localCount), Object.values(localCount));
     }
     
     // Psicologia - Mobiliários
     if (categoryId === 'PsicologiaMobiliarios') {
-        const chartCard = document.createElement('div');
-        chartCard.className = 'chart-card';
-        chartCard.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Distribuição de Mobiliário</h3>
-                <span class="chart-subtitle">Itens por tipo</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="psicologiaMobChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard);
-        
         let mesas = 0, micros = 0, cadeiras = 0, cadeirasFix = 0;
         data.forEach(item => {
             mesas += parseInt(item['QuantidadeMesa'] || 0);
@@ -1165,75 +923,17 @@ function buildCategoryCharts(categoryId, data) {
             cadeirasFix += parseInt(item['QuantidadeCadeirasfixas'] || 0);
         });
         
-        setTimeout(() => {
-            const ctx = document.getElementById('psicologiaMobChart');
-            if (ctx) {
-                charts.categoryChart1 = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Mesas', 'Microcomputadores', 'Cadeiras Giratórias', 'Cadeiras Fixas'],
-                        datasets: [{
-                            label: 'Quantidade',
-                            data: [mesas, micros, cadeiras, cadeirasFix],
-                            backgroundColor: ['#14b8a6', '#06b6d4', '#0ea5e9', '#0284c7'],
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                    }
-                });
-            }
-        }, 100);
+        const items = {};
+        if (mesas > 0) items['Mesas'] = mesas;
+        if (micros > 0) items['Microcomputadores'] = micros;
+        if (cadeiras > 0) items['Cadeiras Giratórias'] = cadeiras;
+        if (cadeirasFix > 0) items['Cadeiras Fixas'] = cadeirasFix;
+        
+        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo', 'psicologiaMobPie', Object.keys(items), Object.values(items));
     }
     
-    // Generic Equipe categories (Controle Interno, Qualidade, Engenharia, Assessoria, Comunicação)
+    // Generic Equipe categories
     if (categoryId.includes('Equipe') && !['WSEngenhariaEquipe', 'PsicologiaEquipe'].includes(categoryId)) {
-        // Chart 1: Bar chart by cargo
-        const chartCard1 = document.createElement('div');
-        chartCard1.className = 'chart-card';
-        chartCard1.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Quantidade por Cargo</h3>
-                <span class="chart-subtitle">Distribuição da equipe por função</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="equipeCargoBarChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard1);
-        
-        // Chart 2: Pie chart
-        const chartCard2 = document.createElement('div');
-        chartCard2.className = 'chart-card';
-        chartCard2.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Proporção por Cargo</h3>
-                <span class="chart-subtitle">Percentual de pessoas</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="equipeCargoPieChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard2);
-        
-        // Chart 3: Location distribution
-        const chartCard3 = document.createElement('div');
-        chartCard3.className = 'chart-card';
-        chartCard3.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Distribuição por Local</h3>
-                <span class="chart-subtitle">Pessoas por local atual</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="equipeLocalChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard3);
-        
         const cargoCount = {};
         const localCount = {};
         data.forEach(item => {
@@ -1245,103 +945,12 @@ function buildCategoryCharts(categoryId, data) {
             localCount[local] = (localCount[local] || 0) + qty;
         });
         
-        setTimeout(() => {
-            const ctx1 = document.getElementById('equipeCargoBarChart');
-            if (ctx1) {
-                charts.categoryChart1 = new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(cargoCount),
-                        datasets: [{
-                            label: 'Quantidade de Pessoas',
-                            data: Object.values(cargoCount),
-                            backgroundColor: chartColors.slice(0, Object.keys(cargoCount).length),
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                    }
-                });
-            }
-            
-            const ctx2 = document.getElementById('equipeCargoPieChart');
-            if (ctx2) {
-                charts.categoryChart2 = new Chart(ctx2, {
-                    type: 'pie',
-                    data: {
-                        labels: Object.keys(cargoCount),
-                        datasets: [{
-                            data: Object.values(cargoCount),
-                            backgroundColor: chartColors.slice(0, Object.keys(cargoCount).length),
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-            
-            const ctx3 = document.getElementById('equipeLocalChart');
-            if (ctx3) {
-                charts.categoryChart3 = new Chart(ctx3, {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(localCount),
-                        datasets: [{
-                            data: Object.values(localCount),
-                            backgroundColor: chartColors.slice(0, Object.keys(localCount).length),
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '50%',
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-        }, 100);
+        createPieChart('Pessoas por Cargo', 'Distribuição da equipe por função', 'equipeCargoPie', Object.keys(cargoCount), Object.values(cargoCount));
+        createPieChart('Pessoas por Local', 'Local atual da equipe', 'equipeLocalPie', Object.keys(localCount), Object.values(localCount));
     }
     
     // Generic Mobiliários categories
     if (categoryId.includes('Mobiliario') && !['WSEngenhariaMobiliarios ', 'PsicologiaMobiliarios'].includes(categoryId)) {
-        // Chart 1: Bar chart for furniture types
-        const chartCard1 = document.createElement('div');
-        chartCard1.className = 'chart-card';
-        chartCard1.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Distribuição de Mobiliário</h3>
-                <span class="chart-subtitle">Itens por tipo</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="mobiliarioBarChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard1);
-        
-        // Chart 2: Pie chart
-        const chartCard2 = document.createElement('div');
-        chartCard2.className = 'chart-card';
-        chartCard2.innerHTML = `
-            <div class="chart-header">
-                <h3 class="chart-title">Proporção de Itens</h3>
-                <span class="chart-subtitle">Percentual por tipo</span>
-            </div>
-            <div class="chart-body">
-                <canvas id="mobiliarioPieChart"></canvas>
-            </div>
-        `;
-        chartsContainer.appendChild(chartCard2);
-        
         let mesas = 0, cadeiras = 0, micros = 0, impressoras = 0, tvs = 0;
         data.forEach(item => {
             mesas += parseInt(item['QuantidadeMesa'] || 0);
@@ -1351,60 +960,59 @@ function buildCategoryCharts(categoryId, data) {
             tvs += parseInt(item['TV'] || 0);
         });
         
-        const itemsLabels = [];
-        const itemsData = [];
-        const itemsColors = [];
+        const items = {};
+        if (mesas > 0) items['Mesas'] = mesas;
+        if (cadeiras > 0) items['Cadeiras'] = cadeiras;
+        if (micros > 0) items['Microcomputadores'] = micros;
+        if (impressoras > 0) items['Impressoras'] = impressoras;
+        if (tvs > 0) items['TVs'] = tvs;
         
-        if (mesas > 0) { itemsLabels.push('Mesas'); itemsData.push(mesas); itemsColors.push('#1a91e7'); }
-        if (cadeiras > 0) { itemsLabels.push('Cadeiras'); itemsData.push(cadeiras); itemsColors.push('#10b981'); }
-        if (micros > 0) { itemsLabels.push('Microcomputadores'); itemsData.push(micros); itemsColors.push('#f59e0b'); }
-        if (impressoras > 0) { itemsLabels.push('Impressoras'); itemsData.push(impressoras); itemsColors.push('#8b5cf6'); }
-        if (tvs > 0) { itemsLabels.push('TVs'); itemsData.push(tvs); itemsColors.push('#ec4899'); }
+        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo de item', 'mobiliarioPie', Object.keys(items), Object.values(items));
+    }
+    
+    // ControleOS - if exists
+    if (categoryId === 'ControleOS') {
+        const statusCount = {};
+        const tipoCount = {};
         
-        setTimeout(() => {
-            const ctx1 = document.getElementById('mobiliarioBarChart');
-            if (ctx1 && itemsLabels.length > 0) {
-                charts.categoryChart1 = new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: itemsLabels,
-                        datasets: [{
-                            label: 'Quantidade',
-                            data: itemsData,
-                            backgroundColor: itemsColors,
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                    }
-                });
-            }
-            
-            const ctx2 = document.getElementById('mobiliarioPieChart');
-            if (ctx2 && itemsLabels.length > 0) {
-                charts.categoryChart2 = new Chart(ctx2, {
-                    type: 'doughnut',
-                    data: {
-                        labels: itemsLabels,
-                        datasets: [{
-                            data: itemsData,
-                            backgroundColor: itemsColors,
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '50%',
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-        }, 100);
+        data.forEach(item => {
+            // Try to find status and type fields
+            Object.keys(item).forEach(key => {
+                if (key.toLowerCase().includes('status')) {
+                    const status = item[key] || 'N/A';
+                    statusCount[status] = (statusCount[status] || 0) + 1;
+                }
+                if (key.toLowerCase().includes('tipo')) {
+                    const tipo = item[key] || 'N/A';
+                    tipoCount[tipo] = (tipoCount[tipo] || 0) + 1;
+                }
+            });
+        });
+        
+        if (Object.keys(statusCount).length > 0) {
+            createPieChart('Distribuição por Status', 'Status dos registros', 'controleOSStatusPie', Object.keys(statusCount), Object.values(statusCount));
+        }
+        if (Object.keys(tipoCount).length > 0) {
+            createPieChart('Distribuição por Tipo', 'Tipos de registros', 'controleOSTipoPie', Object.keys(tipoCount), Object.values(tipoCount));
+        }
+    }
+    
+    // SolicitacaoDocumentos
+    if (categoryId === 'SolicitacaoDocumentos') {
+        const statusCount = {};
+        
+        data.forEach(item => {
+            Object.keys(item).forEach(key => {
+                if (key.toLowerCase().includes('status')) {
+                    const status = item[key] || 'N/A';
+                    statusCount[status] = (statusCount[status] || 0) + 1;
+                }
+            });
+        });
+        
+        if (Object.keys(statusCount).length > 0) {
+            createPieChart('Distribuição por Status', 'Status das solicitações', 'solDocStatusPie', Object.keys(statusCount), Object.values(statusCount));
+        }
     }
 }
 
