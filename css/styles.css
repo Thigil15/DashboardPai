@@ -654,7 +654,7 @@ body {
 
 .chart-legend-table {
     flex-shrink: 0;
-    max-width: 200px;
+    max-width: 80px;
     margin-top: 20px;
 }
 
@@ -689,15 +689,6 @@ body {
     border-radius: 50%;
     border: 2px solid #fff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.chart-legend-table .legend-label {
-    color: var(--gray-700);
-    font-weight: 500;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .chart-legend-table .legend-value {

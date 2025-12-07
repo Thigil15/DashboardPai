@@ -298,7 +298,6 @@ function createLegendTable(labels, dataValues, colors) {
                 <td class="legend-color">
                     <span class="legend-color-box" style="background-color: ${color}"></span>
                 </td>
-                <td class="legend-label">${label}</td>
                 <td class="legend-value">${percentage}%</td>
             </tr>
         `;
