@@ -576,7 +576,7 @@ body {
 
 /* Chart size variants based on data density */
 .chart-card.chart-size-small {
-    /* Small charts for 1-4 items - normal size */
+    /* Small charts for 1-4 items - uses default sizing */
 }
 
 .chart-card.chart-size-medium {

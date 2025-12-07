@@ -194,7 +194,7 @@ function getPieChartOptions() {
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 5% to avoid overlap
+                    // Only show percentage if slice is at least 5% to avoid overlap in small charts
                     if (parseFloat(percentage) < 5) {
                         return '';
                     }
@@ -244,7 +244,7 @@ function getPieChartOptionsMedium() {
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 4% to avoid overlap
+                    // Only show percentage if slice is at least 4% to avoid overlap in medium charts
                     if (parseFloat(percentage) < 4) {
                         return '';
                     }
@@ -294,7 +294,7 @@ function getPieChartOptionsCompact() {
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 3% to avoid overlap in charts with many items
+                    // Only show percentage if slice is at least 3% to avoid overlap in large charts with many items
                     if (parseFloat(percentage) < 3) {
                         return '';
                     }
