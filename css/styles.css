@@ -643,9 +643,10 @@ body {
 .chart-body.with-legend-table {
     display: flex;
     flex-direction: row;
-    gap: 20px;
-    align-items: flex-start;
+    gap: 24px;
+    align-items: center;
     justify-content: center;
+    padding: 30px 20px;
 }
 
 .chart-body.with-legend-table canvas {
@@ -654,13 +655,16 @@ body {
 
 .chart-legend-table {
     flex-shrink: 0;
-    max-width: 80px;
-    margin-top: 20px;
+    min-width: 70px;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
 }
 
 .chart-legend-table table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .chart-legend-table tbody tr {
@@ -672,30 +676,34 @@ body {
 }
 
 .chart-legend-table td {
-    padding: 8px 4px;
-    font-size: 0.875rem;
+    padding: 10px 6px;
+    font-size: 0.9rem;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .chart-legend-table .legend-color {
-    width: 20px;
-    padding-right: 8px;
+    width: 24px;
+    padding-right: 10px;
+    text-align: center;
 }
 
 .legend-color-box {
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 2px solid #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .chart-legend-table .legend-value {
     text-align: right;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--primary-600);
-    min-width: 45px;
+    min-width: 50px;
+    padding-left: 8px;
+    font-size: 0.95rem;
 }
 
 /* =====================================================
