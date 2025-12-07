@@ -661,17 +661,18 @@ function buildCategoryCharts(categoryId, data) {
     }
     
     // Destroy existing category charts
-    for (let i = 1; i <= 10; i++) {
-        if (charts['categoryChart' + i] && typeof charts['categoryChart' + i].destroy === 'function') {
-            charts['categoryChart' + i].destroy();
+    Object.keys(charts).forEach(key => {
+        if (key.startsWith('categoryChart') && charts[key] && typeof charts[key].destroy === 'function') {
+            charts[key].destroy();
+            delete charts[key];
         }
-    }
+    });
     
     const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
     let chartIndex = 1;
     
     // Helper function to create a pie chart
-    function createPieChart(title, subtitle, canvasId, labels, dataValues) {
+    function createPieChart(title, subtitle, canvasId, labels, dataValues, useCompact = false) {
         const chartCard = document.createElement('div');
         chartCard.className = 'chart-card';
         chartCard.innerHTML = `
@@ -699,7 +700,7 @@ function buildCategoryCharts(categoryId, data) {
                             borderColor: '#fff'
                         }]
                     },
-                    options: getPieChartOptions()
+                    options: useCompact ? getPieChartOptionsCompact() : getPieChartOptions()
                 });
                 chartIndex++;
             }
@@ -751,15 +752,15 @@ function buildCategoryCharts(categoryId, data) {
         
         // Top 8 sectors
         const topSetores = Object.entries(setorCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
-        createPieChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorPie', topSetores.map(s => s[0]), topSetores.map(s => s[1]));
+        createPieChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorPie', topSetores.map(s => s[0]), topSetores.map(s => s[1]), true);
         
         // Top 10 rooms
         const topSalas = Object.entries(salaCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        createPieChart('Top 10 Salas', 'Salas com mais itens', 'inventarioSalaPie', topSalas.map(s => s[0]), topSalas.map(s => s[1]));
+        createPieChart('Top 10 Salas', 'Salas com mais itens', 'inventarioSalaPie', topSalas.map(s => s[0]), topSalas.map(s => s[1]), true);
         
         // Top 10 item descriptions
         const topDescricoes = Object.entries(descricaoCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        createPieChart('Top 10 Tipos de Itens', 'Itens mais comuns no inventário', 'inventarioDescricaoPie', topDescricoes.map(s => s[0]), topDescricoes.map(s => s[1]));
+        createPieChart('Top 10 Tipos de Itens', 'Itens mais comuns no inventário', 'inventarioDescricaoPie', topDescricoes.map(s => s[0]), topDescricoes.map(s => s[1]), true);
     }
     
     // Solicitações - Status pie chart
