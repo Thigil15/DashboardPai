@@ -159,17 +159,19 @@ function configureChartDefaults() {
 // Check if Chart.js is loaded
 const isChartJsLoaded = () => typeof Chart !== 'undefined';
 
-// Helper function to calculate percentage for pie chart data
-function calculatePercentage(value, dataset) {
-    const total = dataset.data.reduce((a, b) => a + b, 0);
-    return ((value / total) * 100).toFixed(1);
-}
-
 // Get standard pie chart options with percentage labels (for small charts with few items)
 function getPieChartOptions() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 30,
+                bottom: 30,
+                left: 30,
+                right: 30
+            }
+        },
         plugins: {
             legend: {
                 position: 'bottom',
@@ -195,15 +197,21 @@ function getPieChartOptions() {
                 color: '#334155',
                 backgroundColor: '#ffffff',
                 borderColor: '#cbd5e1',
-                borderWidth: 1,
+                borderWidth: 1.5,
                 borderRadius: 4,
-                padding: 6,
+                padding: {
+                    top: 4,
+                    bottom: 4,
+                    left: 6,
+                    right: 6
+                },
                 font: {
                     weight: 'bold',
                     size: 12
                 },
                 formatter: (value, context) => {
-                    const percentage = calculatePercentage(value, context.dataset);
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
                     // Only show percentage if slice is at least 3% to avoid overlap
                     if (parseFloat(percentage) < 3) {
                         return '';
@@ -212,12 +220,8 @@ function getPieChartOptions() {
                 },
                 anchor: 'end',
                 align: 'end',
-                offset: 10,
-                clamp: false,
-                display: function(context) {
-                    const percentage = calculatePercentage(context.dataset.data[context.dataIndex], context.dataset);
-                    return parseFloat(percentage) >= 3;
-                }
+                offset: 15,
+                clamp: false
             }
         }
     };
@@ -228,6 +232,14 @@ function getPieChartOptionsMedium() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 25,
+                bottom: 25,
+                left: 25,
+                right: 25
+            }
+        },
         plugins: {
             legend: {
                 position: 'bottom',
@@ -253,15 +265,21 @@ function getPieChartOptionsMedium() {
                 color: '#334155',
                 backgroundColor: '#ffffff',
                 borderColor: '#cbd5e1',
-                borderWidth: 1,
+                borderWidth: 1.5,
                 borderRadius: 4,
-                padding: 5,
+                padding: {
+                    top: 3,
+                    bottom: 3,
+                    left: 5,
+                    right: 5
+                },
                 font: {
                     weight: 'bold',
                     size: 11
                 },
                 formatter: (value, context) => {
-                    const percentage = calculatePercentage(value, context.dataset);
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
                     // Only show percentage if slice is at least 2.5% to avoid overlap
                     if (parseFloat(percentage) < 2.5) {
                         return '';
@@ -270,12 +288,8 @@ function getPieChartOptionsMedium() {
                 },
                 anchor: 'end',
                 align: 'end',
-                offset: 8,
-                clamp: false,
-                display: function(context) {
-                    const percentage = calculatePercentage(context.dataset.data[context.dataIndex], context.dataset);
-                    return parseFloat(percentage) >= 2.5;
-                }
+                offset: 12,
+                clamp: false
             }
         }
     };
@@ -286,6 +300,14 @@ function getPieChartOptionsCompact() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 20,
+                bottom: 20,
+                left: 20,
+                right: 20
+            }
+        },
         plugins: {
             legend: {
                 position: 'bottom',
@@ -311,15 +333,21 @@ function getPieChartOptionsCompact() {
                 color: '#334155',
                 backgroundColor: '#ffffff',
                 borderColor: '#cbd5e1',
-                borderWidth: 1,
+                borderWidth: 1.5,
                 borderRadius: 3,
-                padding: 4,
+                padding: {
+                    top: 2,
+                    bottom: 2,
+                    left: 4,
+                    right: 4
+                },
                 font: {
                     weight: 'bold',
                     size: 10
                 },
                 formatter: (value, context) => {
-                    const percentage = calculatePercentage(value, context.dataset);
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
                     // Only show percentage if slice is at least 2% to avoid overlap
                     if (parseFloat(percentage) < 2) {
                         return '';
@@ -328,12 +356,8 @@ function getPieChartOptionsCompact() {
                 },
                 anchor: 'end',
                 align: 'end',
-                offset: 6,
-                clamp: false,
-                display: function(context) {
-                    const percentage = calculatePercentage(context.dataset.data[context.dataIndex], context.dataset);
-                    return parseFloat(percentage) >= 2;
-                }
+                offset: 10,
+                clamp: false
             }
         }
     };
@@ -363,10 +387,6 @@ function getHorizontalBarChartOptions() {
                     size: 12
                 },
                 formatter: (value) => {
-                    // Ensure we return a valid number
-                    if (value === null || value === undefined || isNaN(value)) {
-                        return '';
-                    }
                     return Math.round(value);
                 },
                 anchor: 'end',
@@ -384,10 +404,6 @@ function getHorizontalBarChartOptions() {
                 ticks: {
                     font: {
                         size: 11
-                    },
-                    callback: function(value) {
-                        // Format tick values as integers
-                        return Math.round(value);
                     }
                 }
             },
@@ -410,6 +426,11 @@ function getBarChartOptions() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 30
+            }
+        },
         plugins: {
             legend: {
                 display: false
@@ -428,10 +449,6 @@ function getBarChartOptions() {
                     size: 11
                 },
                 formatter: (value) => {
-                    // Ensure we return a valid number
-                    if (value === null || value === undefined || isNaN(value)) {
-                        return '';
-                    }
                     return Math.round(value);
                 },
                 anchor: 'end',
@@ -460,10 +477,6 @@ function getBarChartOptions() {
                 ticks: {
                     font: {
                         size: 11
-                    },
-                    callback: function(value) {
-                        // Format tick values as integers
-                        return Math.round(value);
                     }
                 }
             }
