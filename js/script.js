@@ -159,6 +159,12 @@ function configureChartDefaults() {
 // Check if Chart.js is loaded
 const isChartJsLoaded = () => typeof Chart !== 'undefined';
 
+// Helper function to calculate percentage for pie chart data
+function calculatePercentage(value, dataset) {
+    const total = dataset.data.reduce((a, b) => a + b, 0);
+    return ((value / total) * 100).toFixed(1);
+}
+
 // Get standard pie chart options with percentage labels (for small charts with few items)
 function getPieChartOptions() {
     return {
@@ -197,8 +203,7 @@ function getPieChartOptions() {
                     size: 12
                 },
                 formatter: (value, context) => {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
+                    const percentage = calculatePercentage(value, context.dataset);
                     // Only show percentage if slice is at least 3% to avoid overlap
                     if (parseFloat(percentage) < 3) {
                         return '';
@@ -210,9 +215,8 @@ function getPieChartOptions() {
                 offset: 10,
                 clamp: false,
                 display: function(context) {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((context.dataset.data[context.dataIndex] / total) * 100);
-                    return percentage >= 3;
+                    const percentage = calculatePercentage(context.dataset.data[context.dataIndex], context.dataset);
+                    return parseFloat(percentage) >= 3;
                 }
             }
         }
@@ -257,8 +261,7 @@ function getPieChartOptionsMedium() {
                     size: 11
                 },
                 formatter: (value, context) => {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
+                    const percentage = calculatePercentage(value, context.dataset);
                     // Only show percentage if slice is at least 2.5% to avoid overlap
                     if (parseFloat(percentage) < 2.5) {
                         return '';
@@ -270,9 +273,8 @@ function getPieChartOptionsMedium() {
                 offset: 8,
                 clamp: false,
                 display: function(context) {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((context.dataset.data[context.dataIndex] / total) * 100);
-                    return percentage >= 2.5;
+                    const percentage = calculatePercentage(context.dataset.data[context.dataIndex], context.dataset);
+                    return parseFloat(percentage) >= 2.5;
                 }
             }
         }
@@ -317,8 +319,7 @@ function getPieChartOptionsCompact() {
                     size: 10
                 },
                 formatter: (value, context) => {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
+                    const percentage = calculatePercentage(value, context.dataset);
                     // Only show percentage if slice is at least 2% to avoid overlap
                     if (parseFloat(percentage) < 2) {
                         return '';
@@ -330,9 +331,8 @@ function getPieChartOptionsCompact() {
                 offset: 6,
                 clamp: false,
                 display: function(context) {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((context.dataset.data[context.dataIndex] / total) * 100);
-                    return percentage >= 2;
+                    const percentage = calculatePercentage(context.dataset.data[context.dataIndex], context.dataset);
+                    return parseFloat(percentage) >= 2;
                 }
             }
         }
