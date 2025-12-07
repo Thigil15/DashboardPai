@@ -186,24 +186,34 @@ function getPieChartOptions() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: '#334155',
+                backgroundColor: '#ffffff',
+                borderColor: '#cbd5e1',
+                borderWidth: 1,
+                borderRadius: 4,
+                padding: 6,
                 font: {
                     weight: 'bold',
-                    size: 13
+                    size: 12
                 },
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 5% to avoid overlap in small charts
-                    if (parseFloat(percentage) < 5) {
+                    // Only show percentage if slice is at least 3% to avoid overlap
+                    if (parseFloat(percentage) < 3) {
                         return '';
                     }
                     return percentage + '%';
                 },
-                anchor: 'center',
-                align: 'center',
-                offset: 0,
-                clamp: true
+                anchor: 'end',
+                align: 'end',
+                offset: 10,
+                clamp: false,
+                display: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.dataset.data[context.dataIndex] / total) * 100);
+                    return percentage >= 3;
+                }
             }
         }
     };
@@ -236,24 +246,34 @@ function getPieChartOptionsMedium() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: '#334155',
+                backgroundColor: '#ffffff',
+                borderColor: '#cbd5e1',
+                borderWidth: 1,
+                borderRadius: 4,
+                padding: 5,
                 font: {
                     weight: 'bold',
-                    size: 12
+                    size: 11
                 },
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 4% to avoid overlap in medium charts
-                    if (parseFloat(percentage) < 4) {
+                    // Only show percentage if slice is at least 2.5% to avoid overlap
+                    if (parseFloat(percentage) < 2.5) {
                         return '';
                     }
                     return percentage + '%';
                 },
-                anchor: 'center',
-                align: 'center',
-                offset: 0,
-                clamp: true
+                anchor: 'end',
+                align: 'end',
+                offset: 8,
+                clamp: false,
+                display: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.dataset.data[context.dataIndex] / total) * 100);
+                    return percentage >= 2.5;
+                }
             }
         }
     };
@@ -286,24 +306,34 @@ function getPieChartOptionsCompact() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: '#334155',
+                backgroundColor: '#ffffff',
+                borderColor: '#cbd5e1',
+                borderWidth: 1,
+                borderRadius: 3,
+                padding: 4,
                 font: {
                     weight: 'bold',
-                    size: 11
+                    size: 10
                 },
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 3% to avoid overlap in large charts with many items
-                    if (parseFloat(percentage) < 3) {
+                    // Only show percentage if slice is at least 2% to avoid overlap
+                    if (parseFloat(percentage) < 2) {
                         return '';
                     }
                     return percentage + '%';
                 },
-                anchor: 'center',
-                align: 'center',
-                offset: 0,
-                clamp: true
+                anchor: 'end',
+                align: 'end',
+                offset: 6,
+                clamp: false,
+                display: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.dataset.data[context.dataIndex] / total) * 100);
+                    return percentage >= 2;
+                }
             }
         }
     };
@@ -333,7 +363,11 @@ function getHorizontalBarChartOptions() {
                     size: 12
                 },
                 formatter: (value) => {
-                    return value;
+                    // Ensure we return a valid number
+                    if (value === null || value === undefined || isNaN(value)) {
+                        return '';
+                    }
+                    return Math.round(value);
                 },
                 anchor: 'end',
                 align: 'start',
@@ -350,6 +384,10 @@ function getHorizontalBarChartOptions() {
                 ticks: {
                     font: {
                         size: 11
+                    },
+                    callback: function(value) {
+                        // Format tick values as integers
+                        return Math.round(value);
                     }
                 }
             },
@@ -390,7 +428,11 @@ function getBarChartOptions() {
                     size: 11
                 },
                 formatter: (value) => {
-                    return value;
+                    // Ensure we return a valid number
+                    if (value === null || value === undefined || isNaN(value)) {
+                        return '';
+                    }
+                    return Math.round(value);
                 },
                 anchor: 'end',
                 align: 'top',
@@ -418,6 +460,10 @@ function getBarChartOptions() {
                 ticks: {
                     font: {
                         size: 11
+                    },
+                    callback: function(value) {
+                        // Format tick values as integers
+                        return Math.round(value);
                     }
                 }
             }
