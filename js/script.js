@@ -159,17 +159,17 @@ function configureChartDefaults() {
 // Check if Chart.js is loaded
 const isChartJsLoaded = () => typeof Chart !== 'undefined';
 
-// Get standard pie chart options with percentage labels (for small charts with few items)
+// Get standard pie chart options - percentages shown only in tooltip
 function getPieChartOptions() {
     return {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
             padding: {
-                top: 30,
-                bottom: 30,
-                left: 30,
-                right: 30
+                top: 20,
+                bottom: 20,
+                left: 20,
+                right: 20
             }
         },
         plugins: {
@@ -194,34 +194,7 @@ function getPieChartOptions() {
                 }
             },
             datalabels: {
-                color: '#334155',
-                backgroundColor: '#ffffff',
-                borderColor: '#cbd5e1',
-                borderWidth: 1.5,
-                borderRadius: 4,
-                padding: {
-                    top: 4,
-                    bottom: 4,
-                    left: 6,
-                    right: 6
-                },
-                font: {
-                    weight: 'bold',
-                    size: 12
-                },
-                formatter: (value, context) => {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 3% to avoid overlap
-                    if (parseFloat(percentage) < 3) {
-                        return '';
-                    }
-                    return percentage + '%';
-                },
-                anchor: 'end',
-                align: 'end',
-                offset: 15,
-                clamp: false
+                display: false  // Hide percentages on the chart itself
             }
         }
     };
@@ -234,10 +207,10 @@ function getPieChartOptionsMedium() {
         maintainAspectRatio: false,
         layout: {
             padding: {
-                top: 25,
-                bottom: 25,
-                left: 25,
-                right: 25
+                top: 20,
+                bottom: 20,
+                left: 20,
+                right: 20
             }
         },
         plugins: {
@@ -262,34 +235,7 @@ function getPieChartOptionsMedium() {
                 }
             },
             datalabels: {
-                color: '#334155',
-                backgroundColor: '#ffffff',
-                borderColor: '#cbd5e1',
-                borderWidth: 1.5,
-                borderRadius: 4,
-                padding: {
-                    top: 3,
-                    bottom: 3,
-                    left: 5,
-                    right: 5
-                },
-                font: {
-                    weight: 'bold',
-                    size: 11
-                },
-                formatter: (value, context) => {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 2.5% to avoid overlap
-                    if (parseFloat(percentage) < 2.5) {
-                        return '';
-                    }
-                    return percentage + '%';
-                },
-                anchor: 'end',
-                align: 'end',
-                offset: 12,
-                clamp: false
+                display: false  // Hide percentages on the chart itself
             }
         }
     };
@@ -330,37 +276,36 @@ function getPieChartOptionsCompact() {
                 }
             },
             datalabels: {
-                color: '#334155',
-                backgroundColor: '#ffffff',
-                borderColor: '#cbd5e1',
-                borderWidth: 1.5,
-                borderRadius: 3,
-                padding: {
-                    top: 2,
-                    bottom: 2,
-                    left: 4,
-                    right: 4
-                },
-                font: {
-                    weight: 'bold',
-                    size: 10
-                },
-                formatter: (value, context) => {
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 2% to avoid overlap
-                    if (parseFloat(percentage) < 2) {
-                        return '';
-                    }
-                    return percentage + '%';
-                },
-                anchor: 'end',
-                align: 'end',
-                offset: 10,
-                clamp: false
+                display: false  // Hide percentages on the chart itself
             }
         }
     };
+}
+
+// Create a legend table to show next to pie charts
+function createLegendTable(labels, dataValues, colors) {
+    const total = dataValues.reduce((a, b) => a + b, 0);
+    
+    let tableHTML = '<div class="chart-legend-table"><table><tbody>';
+    
+    labels.forEach((label, index) => {
+        const value = dataValues[index];
+        const percentage = ((value / total) * 100).toFixed(1);
+        const color = colors[index];
+        
+        tableHTML += `
+            <tr>
+                <td class="legend-color">
+                    <span class="legend-color-box" style="background-color: ${color}"></span>
+                </td>
+                <td class="legend-label">${label}</td>
+                <td class="legend-value">${percentage}%</td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += '</tbody></table></div>';
+    return tableHTML;
 }
 
 // Get horizontal bar chart options (for charts with many items)
@@ -777,21 +722,33 @@ function buildOverviewCharts() {
     
     const statusCtx = document.getElementById('inventoryStatusChart');
     if (statusCtx) {
-        const statusItemCount = Object.keys(statusCount).length;
+        const statusLabels = Object.keys(statusCount);
+        const statusValues = Object.values(statusCount);
+        const statusItemCount = statusLabels.length;
+        const statusColors = chartColors.slice(0, statusItemCount);
+        
         // Small chart - few items (use standard options)
         charts.inventoryStatus = new Chart(statusCtx, {
             type: 'pie',
             data: {
-                labels: Object.keys(statusCount),
+                labels: statusLabels,
                 datasets: [{
-                    data: Object.values(statusCount),
-                    backgroundColor: chartColors.slice(0, statusItemCount),
+                    data: statusValues,
+                    backgroundColor: statusColors,
                     borderWidth: 2,
                     borderColor: '#fff'
                 }]
             },
             options: getPieChartOptions()
         });
+        
+        // Add legend table to the chart body
+        const chartBody = statusCtx.closest('.chart-body');
+        if (chartBody) {
+            chartBody.classList.add('with-legend-table');
+            const legendTable = createLegendTable(statusLabels, statusValues, statusColors);
+            chartBody.insertAdjacentHTML('beforeend', legendTable);
+        }
     }
     
     // Chart 2: Requests Status (Pie)
@@ -803,21 +760,33 @@ function buildOverviewCharts() {
     
     const requestsCtx = document.getElementById('requestsStatusChart');
     if (requestsCtx && Object.keys(requestStatusCount).length > 0) {
-        const reqItemCount = Object.keys(requestStatusCount).length;
+        const reqLabels = Object.keys(requestStatusCount);
+        const reqValues = Object.values(requestStatusCount);
+        const reqItemCount = reqLabels.length;
+        const reqColors = chartColors.slice(0, reqItemCount);
+        
         // Small chart - few items (use standard options)
         charts.requestsStatus = new Chart(requestsCtx, {
             type: 'pie',
             data: {
-                labels: Object.keys(requestStatusCount),
+                labels: reqLabels,
                 datasets: [{
-                    data: Object.values(requestStatusCount),
-                    backgroundColor: chartColors.slice(0, reqItemCount),
+                    data: reqValues,
+                    backgroundColor: reqColors,
                     borderWidth: 2,
                     borderColor: '#fff'
                 }]
             },
             options: getPieChartOptions()
         });
+        
+        // Add legend table to the chart body
+        const chartBody = requestsCtx.closest('.chart-body');
+        if (chartBody) {
+            chartBody.classList.add('with-legend-table');
+            const legendTable = createLegendTable(reqLabels, reqValues, reqColors);
+            chartBody.insertAdjacentHTML('beforeend', legendTable);
+        }
     }
     
     // Chart 3: Inventory by Sector (Horizontal Bar - Top 10)
@@ -993,6 +962,9 @@ function buildCategoryCharts(categoryId, data) {
             chartOptions = getPieChartOptionsCompact();
         }
         
+        const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
+        const colors = chartColors.slice(0, labels.length);
+        
         const chartCard = document.createElement('div');
         chartCard.className = `chart-card chart-size-${chartSize}`;
         chartCard.innerHTML = `
@@ -1000,7 +972,7 @@ function buildCategoryCharts(categoryId, data) {
                 <h3 class="chart-title">${title}</h3>
                 <span class="chart-subtitle">${subtitle}</span>
             </div>
-            <div class="chart-body">
+            <div class="chart-body with-legend-table">
                 <canvas id="${canvasId}"></canvas>
             </div>
         `;
@@ -1015,13 +987,21 @@ function buildCategoryCharts(categoryId, data) {
                         labels: labels,
                         datasets: [{
                             data: dataValues,
-                            backgroundColor: chartColors.slice(0, labels.length),
+                            backgroundColor: colors,
                             borderWidth: 2,
                             borderColor: '#fff'
                         }]
                     },
                     options: chartOptions
                 });
+                
+                // Add legend table to the chart body
+                const chartBody = ctx.closest('.chart-body');
+                if (chartBody) {
+                    const legendTable = createLegendTable(labels, dataValues, colors);
+                    chartBody.insertAdjacentHTML('beforeend', legendTable);
+                }
+                
                 chartIndex++;
             }
         }, 100);

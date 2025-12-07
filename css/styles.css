@@ -639,6 +639,74 @@ body {
     max-height: 360px;
 }
 
+/* Chart Legend Table (shown to the right of pie charts) */
+.chart-body.with-legend-table {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.chart-body.with-legend-table canvas {
+    flex-shrink: 0;
+}
+
+.chart-legend-table {
+    flex-shrink: 0;
+    max-width: 200px;
+    margin-top: 20px;
+}
+
+.chart-legend-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.chart-legend-table tbody tr {
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.chart-legend-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.chart-legend-table td {
+    padding: 8px 4px;
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.chart-legend-table .legend-color {
+    width: 20px;
+    padding-right: 8px;
+}
+
+.legend-color-box {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.chart-legend-table .legend-label {
+    color: var(--gray-700);
+    font-weight: 500;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chart-legend-table .legend-value {
+    text-align: right;
+    font-weight: 600;
+    color: var(--primary-600);
+    min-width: 45px;
+}
+
 /* =====================================================
    Category Section
    ===================================================== */
