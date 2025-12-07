@@ -159,7 +159,7 @@ function configureChartDefaults() {
 // Check if Chart.js is loaded
 const isChartJsLoaded = () => typeof Chart !== 'undefined';
 
-// Get standard pie chart options with percentage labels
+// Get standard pie chart options with percentage labels (for small charts with few items)
 function getPieChartOptions() {
     return {
         responsive: true,
@@ -170,7 +170,10 @@ function getPieChartOptions() {
                 labels: {
                     padding: 15,
                     usePointStyle: true,
-                    pointStyle: 'circle'
+                    pointStyle: 'circle',
+                    font: {
+                        size: 12
+                    }
                 }
             },
             tooltip: {
@@ -186,24 +189,124 @@ function getPieChartOptions() {
                 color: '#fff',
                 font: {
                     weight: 'bold',
-                    size: 14
+                    size: 13
                 },
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
+                    // Only show percentage if slice is at least 5% to avoid overlap in small charts
+                    if (parseFloat(percentage) < 5) {
+                        return '';
+                    }
                     return percentage + '%';
-                }
+                },
+                anchor: 'center',
+                align: 'center',
+                offset: 0,
+                clamp: true
             }
         }
     };
 }
 
-// Get pie chart options with smaller legend (for charts with many items)
+// Get pie chart options for medium-sized charts (5-8 items)
+function getPieChartOptionsMedium() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 12,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    font: {
+                        size: 11
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                        return `${context.label}: ${context.raw} (${percentage}%)`;
+                    }
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value, context) => {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    // Only show percentage if slice is at least 4% to avoid overlap in medium charts
+                    if (parseFloat(percentage) < 4) {
+                        return '';
+                    }
+                    return percentage + '%';
+                },
+                anchor: 'center',
+                align: 'center',
+                offset: 0,
+                clamp: true
+            }
+        }
+    };
+}
+
+// Get pie chart options with smaller legend (for large charts with many items)
 function getPieChartOptionsCompact() {
-    const options = getPieChartOptions();
-    options.plugins.legend.labels.padding = 10;
-    options.plugins.legend.labels.font = { size: 10 };
-    return options;
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 8,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    font: {
+                        size: 10
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                        return `${context.label}: ${context.raw} (${percentage}%)`;
+                    }
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value, context) => {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    // Only show percentage if slice is at least 3% to avoid overlap in large charts with many items
+                    if (parseFloat(percentage) < 3) {
+                        return '';
+                    }
+                    return percentage + '%';
+                },
+                anchor: 'center',
+                align: 'center',
+                offset: 0,
+                clamp: true
+            }
+        }
+    };
 }
 
 // =====================================================
@@ -499,13 +602,15 @@ function buildOverviewCharts() {
     
     const statusCtx = document.getElementById('inventoryStatusChart');
     if (statusCtx) {
+        const statusItemCount = Object.keys(statusCount).length;
+        // Small chart - few items (use standard options)
         charts.inventoryStatus = new Chart(statusCtx, {
             type: 'pie',
             data: {
                 labels: Object.keys(statusCount),
                 datasets: [{
                     data: Object.values(statusCount),
-                    backgroundColor: chartColors.slice(0, Object.keys(statusCount).length),
+                    backgroundColor: chartColors.slice(0, statusItemCount),
                     borderWidth: 2,
                     borderColor: '#fff'
                 }]
@@ -523,13 +628,15 @@ function buildOverviewCharts() {
     
     const requestsCtx = document.getElementById('requestsStatusChart');
     if (requestsCtx && Object.keys(requestStatusCount).length > 0) {
+        const reqItemCount = Object.keys(requestStatusCount).length;
+        // Small chart - few items (use standard options)
         charts.requestsStatus = new Chart(requestsCtx, {
             type: 'pie',
             data: {
                 labels: Object.keys(requestStatusCount),
                 datasets: [{
                     data: Object.values(requestStatusCount),
-                    backgroundColor: chartColors.slice(0, Object.keys(requestStatusCount).length),
+                    backgroundColor: chartColors.slice(0, reqItemCount),
                     borderWidth: 2,
                     borderColor: '#fff'
                 }]
@@ -576,18 +683,21 @@ function buildOverviewCharts() {
     
     const floorCtx = document.getElementById('inventoryFloorChart');
     if (floorCtx) {
+        const floorItemCount = Object.keys(floorCount).length;
+        // Use appropriate options based on number of items
+        const floorOptions = floorItemCount > 5 ? getPieChartOptionsMedium() : getPieChartOptions();
         charts.inventoryFloor = new Chart(floorCtx, {
             type: 'pie',
             data: {
                 labels: Object.keys(floorCount),
                 datasets: [{
                     data: Object.values(floorCount),
-                    backgroundColor: chartColors.slice(0, Object.keys(floorCount).length),
+                    backgroundColor: chartColors.slice(0, floorItemCount),
                     borderWidth: 2,
                     borderColor: '#ffffff'
                 }]
             },
-            options: getPieChartOptions()
+            options: floorOptions
         });
     }
     
@@ -606,6 +716,7 @@ function buildOverviewCharts() {
     
     const specialtiesCtx = document.getElementById('specialtiesChart');
     if (specialtiesCtx && topSpecialties.length > 0) {
+        // Medium chart - 8 items (use medium options)
         charts.specialties = new Chart(specialtiesCtx, {
             type: 'pie',
             data: {
@@ -617,7 +728,7 @@ function buildOverviewCharts() {
                     borderColor: '#fff'
                 }]
             },
-            options: getPieChartOptionsCompact()
+            options: getPieChartOptionsMedium()
         });
     }
 }
@@ -677,10 +788,38 @@ function buildCategoryCharts(categoryId, data) {
     const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
     let chartIndex = 1;
     
-    // Helper function to create a pie chart
-    function createPieChart(title, subtitle, canvasId, labels, dataValues, useCompact = false) {
+    // Helper function to create a pie chart with intelligent sizing
+    function createPieChart(title, subtitle, canvasId, labels, dataValues, sizeHint = 'auto') {
+        const itemCount = labels.length;
+        
+        // Determine chart size and options based on number of items
+        let chartSize = 'normal';
+        let chartOptions;
+        
+        if (sizeHint === 'auto') {
+            if (itemCount <= 4) {
+                chartSize = 'small';
+                chartOptions = getPieChartOptions();
+            } else if (itemCount <= 8) {
+                chartSize = 'medium';
+                chartOptions = getPieChartOptionsMedium();
+            } else {
+                chartSize = 'large';
+                chartOptions = getPieChartOptionsCompact();
+            }
+        } else if (sizeHint === 'small') {
+            chartSize = 'small';
+            chartOptions = getPieChartOptions();
+        } else if (sizeHint === 'medium') {
+            chartSize = 'medium';
+            chartOptions = getPieChartOptionsMedium();
+        } else if (sizeHint === 'large') {
+            chartSize = 'large';
+            chartOptions = getPieChartOptionsCompact();
+        }
+        
         const chartCard = document.createElement('div');
-        chartCard.className = 'chart-card';
+        chartCard.className = `chart-card chart-size-${chartSize}`;
         chartCard.innerHTML = `
             <div class="chart-header">
                 <h3 class="chart-title">${title}</h3>
@@ -706,7 +845,7 @@ function buildCategoryCharts(categoryId, data) {
                             borderColor: '#fff'
                         }]
                     },
-                    options: useCompact ? getPieChartOptionsCompact() : getPieChartOptions()
+                    options: chartOptions
                 });
                 chartIndex++;
             }
@@ -750,23 +889,23 @@ function buildCategoryCharts(categoryId, data) {
             descricaoCount[descricao] = (descricaoCount[descricao] || 0) + 1;
         });
         
-        createPieChart('Inventário por Status', 'Distribuição dos itens por status', 'inventarioStatusPie', Object.keys(statusCount), Object.values(statusCount));
-        createPieChart('Inventário por Andar', 'Distribuição dos itens por andar', 'inventarioAndarPie', Object.keys(andarCount), Object.values(andarCount));
-        createPieChart('Inventário por Tipo de Patrimônio', 'Tipos de patrimônio', 'inventarioPatrimonioPie', Object.keys(patrimonioCount), Object.values(patrimonioCount));
-        createPieChart('Inventário por Prédio', 'Distribuição por edifício', 'inventarioPredioPie', Object.keys(predioCount), Object.values(predioCount));
-        createPieChart('Inventário por Situação', 'Condição dos itens', 'inventarioSituacaoPie', Object.keys(situacaoCount), Object.values(situacaoCount));
+        createPieChart('Inventário por Status', 'Distribuição dos itens por status', 'inventarioStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
+        createPieChart('Inventário por Andar', 'Distribuição dos itens por andar', 'inventarioAndarPie', Object.keys(andarCount), Object.values(andarCount), 'auto');
+        createPieChart('Inventário por Tipo de Patrimônio', 'Tipos de patrimônio', 'inventarioPatrimonioPie', Object.keys(patrimonioCount), Object.values(patrimonioCount), 'auto');
+        createPieChart('Inventário por Prédio', 'Distribuição por edifício', 'inventarioPredioPie', Object.keys(predioCount), Object.values(predioCount), 'auto');
+        createPieChart('Inventário por Situação', 'Condição dos itens', 'inventarioSituacaoPie', Object.keys(situacaoCount), Object.values(situacaoCount), 'auto');
         
-        // Top 8 sectors
+        // Top 8 sectors - medium size
         const topSetores = Object.entries(setorCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
-        createPieChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorPie', topSetores.map(s => s[0]), topSetores.map(s => s[1]), true);
+        createPieChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorPie', topSetores.map(s => s[0]), topSetores.map(s => s[1]), 'medium');
         
-        // Top 10 rooms
+        // Top 10 rooms - large size
         const topSalas = Object.entries(salaCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        createPieChart('Top 10 Salas', 'Salas com mais itens', 'inventarioSalaPie', topSalas.map(s => s[0]), topSalas.map(s => s[1]), true);
+        createPieChart('Top 10 Salas', 'Salas com mais itens', 'inventarioSalaPie', topSalas.map(s => s[0]), topSalas.map(s => s[1]), 'large');
         
-        // Top 10 item descriptions
+        // Top 10 item descriptions - large size
         const topDescricoes = Object.entries(descricaoCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        createPieChart('Top 10 Tipos de Itens', 'Itens mais comuns no inventário', 'inventarioDescricaoPie', topDescricoes.map(s => s[0]), topDescricoes.map(s => s[1]), true);
+        createPieChart('Top 10 Tipos de Itens', 'Itens mais comuns no inventário', 'inventarioDescricaoPie', topDescricoes.map(s => s[0]), topDescricoes.map(s => s[1]), 'large');
     }
     
     // Solicitações - Status pie chart
@@ -791,13 +930,13 @@ function buildCategoryCharts(categoryId, data) {
             }
         });
         
-        createPieChart('Solicitações por Status', 'Distribuição por status', 'solicitacoesStatusPie', Object.keys(statusCount), Object.values(statusCount));
-        createPieChart('Solicitações por Tipo', 'Tipos de solicitação', 'solicitacoesTipoPie', Object.keys(tipoCount), Object.values(tipoCount));
+        createPieChart('Solicitações por Status', 'Distribuição por status', 'solicitacoesStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
+        createPieChart('Solicitações por Tipo', 'Tipos de solicitação', 'solicitacoesTipoPie', Object.keys(tipoCount), Object.values(tipoCount), 'auto');
         
-        // Top 8 especialidades
+        // Top 8 especialidades - medium size
         const topEsp = Object.entries(especialidadeCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
         if (topEsp.length > 0) {
-            createPieChart('Top 8 Especialidades', 'Especialidades mais solicitadas', 'solicitacoesEspPie', topEsp.map(s => s[0]), topEsp.map(s => s[1]));
+            createPieChart('Top 8 Especialidades', 'Especialidades mais solicitadas', 'solicitacoesEspPie', topEsp.map(s => s[0]), topEsp.map(s => s[1]), 'medium');
         }
     }
     
@@ -810,7 +949,7 @@ function buildCategoryCharts(categoryId, data) {
             localCount[local] = (localCount[local] || 0) + qty;
         });
         
-        createPieChart('Pessoas por Instituto', 'Quantidade de prestadores por local atual', 'wsEquipePie', Object.keys(localCount), Object.values(localCount));
+        createPieChart('Pessoas por Instituto', 'Quantidade de prestadores por local atual', 'wsEquipePie', Object.keys(localCount), Object.values(localCount), 'auto');
     }
     
     // WS Engenharia - Mobiliários
@@ -834,7 +973,7 @@ function buildCategoryCharts(categoryId, data) {
             totalArmarios += parseInt(item['QuantidadeArmário'] || 0);
         });
         
-        createPieChart('Itens por Instituto', 'Total de mobiliário por instituto', 'wsMobInstitutoPie', Object.keys(institutoTotals), Object.values(institutoTotals));
+        createPieChart('Itens por Instituto', 'Total de mobiliário por instituto', 'wsMobInstitutoPie', Object.keys(institutoTotals), Object.values(institutoTotals), 'auto');
         
         const tipoItems = {};
         if (totalMesas > 0) tipoItems['Mesas'] = totalMesas;
@@ -844,7 +983,7 @@ function buildCategoryCharts(categoryId, data) {
         if (totalGaveteiros > 0) tipoItems['Gaveteiros'] = totalGaveteiros;
         if (totalArmarios > 0) tipoItems['Armários'] = totalArmarios;
         
-        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo de item', 'wsMobTipoPie', Object.keys(tipoItems), Object.values(tipoItems));
+        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo de item', 'wsMobTipoPie', Object.keys(tipoItems), Object.values(tipoItems), 'auto');
     }
     
     // Psicologia - Equipe
@@ -860,8 +999,8 @@ function buildCategoryCharts(categoryId, data) {
             localCount[local] = (localCount[local] || 0) + qty;
         });
         
-        createPieChart('Pessoas por Especialidade', 'Distribuição da equipe', 'psicologiaEspPie', Object.keys(espCount), Object.values(espCount));
-        createPieChart('Pessoas por Local', 'Local atual da equipe', 'psicologiaLocalPie', Object.keys(localCount), Object.values(localCount));
+        createPieChart('Pessoas por Especialidade', 'Distribuição da equipe', 'psicologiaEspPie', Object.keys(espCount), Object.values(espCount), 'auto');
+        createPieChart('Pessoas por Local', 'Local atual da equipe', 'psicologiaLocalPie', Object.keys(localCount), Object.values(localCount), 'auto');
     }
     
     // Psicologia - Mobiliários
@@ -880,7 +1019,7 @@ function buildCategoryCharts(categoryId, data) {
         if (cadeiras > 0) items['Cadeiras Giratórias'] = cadeiras;
         if (cadeirasFix > 0) items['Cadeiras Fixas'] = cadeirasFix;
         
-        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo', 'psicologiaMobPie', Object.keys(items), Object.values(items));
+        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo', 'psicologiaMobPie', Object.keys(items), Object.values(items), 'auto');
     }
     
     // Generic Equipe categories
@@ -896,8 +1035,8 @@ function buildCategoryCharts(categoryId, data) {
             localCount[local] = (localCount[local] || 0) + qty;
         });
         
-        createPieChart('Pessoas por Cargo', 'Distribuição da equipe por função', 'equipeCargoPie', Object.keys(cargoCount), Object.values(cargoCount));
-        createPieChart('Pessoas por Local', 'Local atual da equipe', 'equipeLocalPie', Object.keys(localCount), Object.values(localCount));
+        createPieChart('Pessoas por Cargo', 'Distribuição da equipe por função', 'equipeCargoPie', Object.keys(cargoCount), Object.values(cargoCount), 'auto');
+        createPieChart('Pessoas por Local', 'Local atual da equipe', 'equipeLocalPie', Object.keys(localCount), Object.values(localCount), 'auto');
     }
     
     // Generic Mobiliários categories
@@ -918,7 +1057,7 @@ function buildCategoryCharts(categoryId, data) {
         if (impressoras > 0) items['Impressoras'] = impressoras;
         if (tvs > 0) items['TVs'] = tvs;
         
-        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo de item', 'mobiliarioPie', Object.keys(items), Object.values(items));
+        createPieChart('Tipos de Mobiliário', 'Distribuição por tipo de item', 'mobiliarioPie', Object.keys(items), Object.values(items), 'auto');
     }
     
     // ControleOS - if exists
@@ -941,10 +1080,10 @@ function buildCategoryCharts(categoryId, data) {
         });
         
         if (Object.keys(statusCount).length > 0) {
-            createPieChart('Distribuição por Status', 'Status dos registros', 'controleOSStatusPie', Object.keys(statusCount), Object.values(statusCount));
+            createPieChart('Distribuição por Status', 'Status dos registros', 'controleOSStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
         }
         if (Object.keys(tipoCount).length > 0) {
-            createPieChart('Distribuição por Tipo', 'Tipos de registros', 'controleOSTipoPie', Object.keys(tipoCount), Object.values(tipoCount));
+            createPieChart('Distribuição por Tipo', 'Tipos de registros', 'controleOSTipoPie', Object.keys(tipoCount), Object.values(tipoCount), 'auto');
         }
     }
     
@@ -962,7 +1101,7 @@ function buildCategoryCharts(categoryId, data) {
         });
         
         if (Object.keys(statusCount).length > 0) {
-            createPieChart('Distribuição por Status', 'Status das solicitações', 'solDocStatusPie', Object.keys(statusCount), Object.values(statusCount));
+            createPieChart('Distribuição por Status', 'Status das solicitações', 'solDocStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
         }
     }
 }
