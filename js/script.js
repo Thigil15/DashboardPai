@@ -164,6 +164,14 @@ function getPieChartOptions() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 30,
+                bottom: 30,
+                left: 30,
+                right: 30
+            }
+        },
         plugins: {
             legend: {
                 position: 'bottom',
@@ -186,24 +194,34 @@ function getPieChartOptions() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: '#334155',
+                backgroundColor: '#ffffff',
+                borderColor: '#cbd5e1',
+                borderWidth: 1.5,
+                borderRadius: 4,
+                padding: {
+                    top: 4,
+                    bottom: 4,
+                    left: 6,
+                    right: 6
+                },
                 font: {
                     weight: 'bold',
-                    size: 13
+                    size: 12
                 },
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 5% to avoid overlap in small charts
-                    if (parseFloat(percentage) < 5) {
+                    // Only show percentage if slice is at least 3% to avoid overlap
+                    if (parseFloat(percentage) < 3) {
                         return '';
                     }
                     return percentage + '%';
                 },
-                anchor: 'center',
-                align: 'center',
-                offset: 0,
-                clamp: true
+                anchor: 'end',
+                align: 'end',
+                offset: 15,
+                clamp: false
             }
         }
     };
@@ -214,6 +232,14 @@ function getPieChartOptionsMedium() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 25,
+                bottom: 25,
+                left: 25,
+                right: 25
+            }
+        },
         plugins: {
             legend: {
                 position: 'bottom',
@@ -236,24 +262,34 @@ function getPieChartOptionsMedium() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: '#334155',
+                backgroundColor: '#ffffff',
+                borderColor: '#cbd5e1',
+                borderWidth: 1.5,
+                borderRadius: 4,
+                padding: {
+                    top: 3,
+                    bottom: 3,
+                    left: 5,
+                    right: 5
+                },
                 font: {
                     weight: 'bold',
-                    size: 12
+                    size: 11
                 },
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 4% to avoid overlap in medium charts
-                    if (parseFloat(percentage) < 4) {
+                    // Only show percentage if slice is at least 2.5% to avoid overlap
+                    if (parseFloat(percentage) < 2.5) {
                         return '';
                     }
                     return percentage + '%';
                 },
-                anchor: 'center',
-                align: 'center',
-                offset: 0,
-                clamp: true
+                anchor: 'end',
+                align: 'end',
+                offset: 12,
+                clamp: false
             }
         }
     };
@@ -264,6 +300,14 @@ function getPieChartOptionsCompact() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 20,
+                bottom: 20,
+                left: 20,
+                right: 20
+            }
+        },
         plugins: {
             legend: {
                 position: 'bottom',
@@ -286,24 +330,34 @@ function getPieChartOptionsCompact() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: '#334155',
+                backgroundColor: '#ffffff',
+                borderColor: '#cbd5e1',
+                borderWidth: 1.5,
+                borderRadius: 3,
+                padding: {
+                    top: 2,
+                    bottom: 2,
+                    left: 4,
+                    right: 4
+                },
                 font: {
                     weight: 'bold',
-                    size: 11
+                    size: 10
                 },
                 formatter: (value, context) => {
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((value / total) * 100).toFixed(1);
-                    // Only show percentage if slice is at least 3% to avoid overlap in large charts with many items
-                    if (parseFloat(percentage) < 3) {
+                    // Only show percentage if slice is at least 2% to avoid overlap
+                    if (parseFloat(percentage) < 2) {
                         return '';
                     }
                     return percentage + '%';
                 },
-                anchor: 'center',
-                align: 'center',
-                offset: 0,
-                clamp: true
+                anchor: 'end',
+                align: 'end',
+                offset: 10,
+                clamp: false
             }
         }
     };
@@ -333,7 +387,7 @@ function getHorizontalBarChartOptions() {
                     size: 12
                 },
                 formatter: (value) => {
-                    return value;
+                    return Math.round(value);
                 },
                 anchor: 'end',
                 align: 'start',
@@ -372,6 +426,11 @@ function getBarChartOptions() {
     return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 30
+            }
+        },
         plugins: {
             legend: {
                 display: false
@@ -390,7 +449,7 @@ function getBarChartOptions() {
                     size: 11
                 },
                 formatter: (value) => {
-                    return value;
+                    return Math.round(value);
                 },
                 anchor: 'end',
                 align: 'top',
