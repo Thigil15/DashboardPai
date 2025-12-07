@@ -32,8 +32,8 @@ const dataCategories = {
         color: '#1a91e7',
         bgColor: '#e8f4fd'
     },
-    'SolicitacoesProntuarios': {
-        name: 'Solicitações de Prontuários',
+    'SolicitacaoDocumentos': {
+        name: 'Solicitação de Documentos',
         icon: '📋',
         color: '#8b5cf6',
         bgColor: '#ede9fe'
@@ -309,6 +309,122 @@ function getPieChartOptionsCompact() {
     };
 }
 
+// Get horizontal bar chart options (for charts with many items)
+function getHorizontalBarChartOptions() {
+    return {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.label}: ${context.raw}`;
+                    }
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => {
+                    return value;
+                },
+                anchor: 'end',
+                align: 'start',
+                offset: 4,
+                clamp: true
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
+                }
+            },
+            y: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+}
+
+// Get vertical bar chart options (for medium-sized charts)
+function getBarChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.label}: ${context.raw}`;
+                    }
+                }
+            },
+            datalabels: {
+                color: '#334155',
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value) => {
+                    return value;
+                },
+                anchor: 'end',
+                align: 'top',
+                offset: 2
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: {
+                        size: 10
+                    },
+                    maxRotation: 45,
+                    minRotation: 0
+                }
+            },
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+}
+
 // =====================================================
 // Data Loading
 // =====================================================
@@ -481,14 +597,14 @@ function showOverview() {
 
 function buildOverviewMetrics() {
     const inventario = allData['InventarioCeaAC2025'] || [];
-    const solicitacoes = allData['SolicitacoesProntuarios'] || [];
+    const solicitacoes = allData['SolicitacaoDocumentos'] || [];
     
     // Count inventory by status
     const emUso = inventario.filter(item => item['STATUS'] === 'EM USO').length;
     
     // Count requests by status
-    const pendentes = solicitacoes.filter(item => item['STATUS'] === 'PENDENTE').length;
-    const enviados = solicitacoes.filter(item => item['STATUS'] === 'ENVIADO').length;
+    const pendentes = solicitacoes.filter(item => item['STATUS'] === 'PENDENTE' || item['STATUS DA SOLICITAÇÃO'] === 'PENDENTE').length;
+    const enviados = solicitacoes.filter(item => item['STATUS'] === 'ENVIADO' || item['STATUS DA SOLICITAÇÃO'] === 'ENVIADO').length;
     
     // Count total staff
     let totalEquipe = 0;
@@ -591,7 +707,7 @@ function buildOverviewCharts() {
     
     const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
     const inventario = allData['InventarioCeaAC2025'] || [];
-    const solicitacoes = allData['SolicitacoesProntuarios'] || [];
+    const solicitacoes = allData['SolicitacaoDocumentos'] || [];
     
     // Chart 1: Inventory Status (Pie)
     const statusCount = {};
@@ -622,7 +738,7 @@ function buildOverviewCharts() {
     // Chart 2: Requests Status (Pie)
     const requestStatusCount = {};
     solicitacoes.forEach(item => {
-        const status = item['STATUS'] || 'N/A';
+        const status = item['STATUS DA SOLICITAÇÃO'] || item['STATUS'] || 'N/A';
         requestStatusCount[status] = (requestStatusCount[status] || 0) + 1;
     });
     
@@ -645,7 +761,7 @@ function buildOverviewCharts() {
         });
     }
     
-    // Chart 3: Inventory by Sector (Pie - Top 10)
+    // Chart 3: Inventory by Sector (Horizontal Bar - Top 10)
     const sectorCount = {};
     inventario.forEach(item => {
         const setor = item['SETOR'] || 'N/A';
@@ -660,21 +776,20 @@ function buildOverviewCharts() {
     const sectorCtx = document.getElementById('inventorySectorChart');
     if (sectorCtx && topSectors.length > 0) {
         charts.inventorySector = new Chart(sectorCtx, {
-            type: 'pie',
+            type: 'bar',
             data: {
                 labels: topSectors.map(s => s[0]),
                 datasets: [{
                     data: topSectors.map(s => s[1]),
                     backgroundColor: chartColors.slice(0, topSectors.length),
-                    borderWidth: 2,
-                    borderColor: '#fff'
+                    borderWidth: 0
                 }]
             },
-            options: getPieChartOptionsCompact()
+            options: getHorizontalBarChartOptions()
         });
     }
     
-    // Chart 4: Inventory by Floor (Pie)
+    // Chart 4: Inventory by Floor (Bar Chart)
     const floorCount = {};
     inventario.forEach(item => {
         const andar = item['ANDAR'] || 'N/A';
@@ -683,30 +798,32 @@ function buildOverviewCharts() {
     
     const floorCtx = document.getElementById('inventoryFloorChart');
     if (floorCtx) {
-        const floorItemCount = Object.keys(floorCount).length;
-        // Use appropriate options based on number of items
-        const floorOptions = floorItemCount > 5 ? getPieChartOptionsMedium() : getPieChartOptions();
+        const floorEntries = Object.entries(floorCount).sort((a, b) => b[1] - a[1]);
         charts.inventoryFloor = new Chart(floorCtx, {
-            type: 'pie',
+            type: 'bar',
             data: {
-                labels: Object.keys(floorCount),
+                labels: floorEntries.map(f => f[0]),
                 datasets: [{
-                    data: Object.values(floorCount),
-                    backgroundColor: chartColors.slice(0, floorItemCount),
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
+                    data: floorEntries.map(f => f[1]),
+                    backgroundColor: chartColors.slice(0, floorEntries.length),
+                    borderWidth: 0
                 }]
             },
-            options: floorOptions
+            options: getBarChartOptions()
         });
     }
     
-    // Chart 5: Top Specialties (Pie)
+    // Chart 5: Top Specialties from Documents (Bar Chart)
     const specialtyCount = {};
     solicitacoes.forEach(item => {
-        const esp = item['ESPECIALIDADE ASSISTENCIAL:'] || item['ESPECIALIDADE MEDICINA DO TRABALHO:'];
-        if (esp && esp !== '' && esp !== 'N/A') {
-            specialtyCount[esp] = (specialtyCount[esp] || 0) + 1;
+        // Try different field names from SolicitacaoDocumentos
+        const solicitacao = item['SOLICITAÇÃO:'] || '';
+        if (solicitacao && solicitacao !== '' && solicitacao !== 'N/A') {
+            // Extract the type (first part before " - ")
+            const tipo = solicitacao.split(' - ')[0].trim();
+            if (tipo) {
+                specialtyCount[tipo] = (specialtyCount[tipo] || 0) + 1;
+            }
         }
     });
     
@@ -716,19 +833,18 @@ function buildOverviewCharts() {
     
     const specialtiesCtx = document.getElementById('specialtiesChart');
     if (specialtiesCtx && topSpecialties.length > 0) {
-        // Medium chart - 8 items (use medium options)
+        // Use horizontal bar chart for better label visibility
         charts.specialties = new Chart(specialtiesCtx, {
-            type: 'pie',
+            type: 'bar',
             data: {
-                labels: topSpecialties.map(s => s[0].length > 15 ? s[0].substring(0, 15) + '...' : s[0]),
+                labels: topSpecialties.map(s => s[0].length > 25 ? s[0].substring(0, 25) + '...' : s[0]),
                 datasets: [{
                     data: topSpecialties.map(s => s[1]),
                     backgroundColor: chartColors.slice(0, topSpecialties.length),
-                    borderWidth: 2,
-                    borderColor: '#fff'
+                    borderWidth: 0
                 }]
             },
-            options: getPieChartOptionsMedium()
+            options: getHorizontalBarChartOptions()
         });
     }
 }
@@ -852,6 +968,41 @@ function buildCategoryCharts(categoryId, data) {
         }, 100);
     }
     
+    // Helper function to create a horizontal bar chart (for charts with many items)
+    function createBarChart(title, subtitle, canvasId, labels, dataValues, horizontal = true) {
+        const chartCard = document.createElement('div');
+        chartCard.className = 'chart-card chart-wide';
+        chartCard.innerHTML = `
+            <div class="chart-header">
+                <h3 class="chart-title">${title}</h3>
+                <span class="chart-subtitle">${subtitle}</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="${canvasId}"></canvas>
+            </div>
+        `;
+        chartsContainer.appendChild(chartCard);
+        
+        setTimeout(() => {
+            const ctx = document.getElementById(canvasId);
+            if (ctx && labels.length > 0) {
+                charts['categoryChart' + chartIndex] = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataValues,
+                            backgroundColor: chartColors.slice(0, labels.length),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: horizontal ? getHorizontalBarChartOptions() : getBarChartOptions()
+                });
+                chartIndex++;
+            }
+        }, 100);
+    }
+    
     // Inventory - Status pie chart
     if (categoryId === 'InventarioCeaAC2025') {
         const statusCount = {};
@@ -890,53 +1041,52 @@ function buildCategoryCharts(categoryId, data) {
         });
         
         createPieChart('Inventário por Status', 'Distribuição dos itens por status', 'inventarioStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
-        createPieChart('Inventário por Andar', 'Distribuição dos itens por andar', 'inventarioAndarPie', Object.keys(andarCount), Object.values(andarCount), 'auto');
+        
+        // Top 8 sectors - use bar chart for better readability
+        const topSetores = Object.entries(setorCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        createBarChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorBar', topSetores.map(s => s[0]), topSetores.map(s => s[1]), true);
+        
+        // Inventory by Floor - use bar chart
+        const andarEntries = Object.entries(andarCount).sort((a, b) => b[1] - a[1]);
+        createBarChart('Inventário por Andar', 'Distribuição dos itens por andar', 'inventarioAndarBar', andarEntries.map(s => s[0]), andarEntries.map(s => s[1]), false);
+        
         createPieChart('Inventário por Tipo de Patrimônio', 'Tipos de patrimônio', 'inventarioPatrimonioPie', Object.keys(patrimonioCount), Object.values(patrimonioCount), 'auto');
         createPieChart('Inventário por Prédio', 'Distribuição por edifício', 'inventarioPredioPie', Object.keys(predioCount), Object.values(predioCount), 'auto');
         createPieChart('Inventário por Situação', 'Condição dos itens', 'inventarioSituacaoPie', Object.keys(situacaoCount), Object.values(situacaoCount), 'auto');
         
-        // Top 8 sectors - medium size
-        const topSetores = Object.entries(setorCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
-        createPieChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorPie', topSetores.map(s => s[0]), topSetores.map(s => s[1]), 'medium');
-        
-        // Top 10 rooms - large size
+        // Top 10 rooms - use bar chart for better label visibility
         const topSalas = Object.entries(salaCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        createPieChart('Top 10 Salas', 'Salas com mais itens', 'inventarioSalaPie', topSalas.map(s => s[0]), topSalas.map(s => s[1]), 'large');
+        createBarChart('Top 10 Salas', 'Salas com mais itens', 'inventarioSalaBar', topSalas.map(s => s[0]), topSalas.map(s => s[1]), true);
         
-        // Top 10 item descriptions - large size
+        // Top 10 item descriptions - use bar chart for better label visibility
         const topDescricoes = Object.entries(descricaoCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        createPieChart('Top 10 Tipos de Itens', 'Itens mais comuns no inventário', 'inventarioDescricaoPie', topDescricoes.map(s => s[0]), topDescricoes.map(s => s[1]), 'large');
+        createBarChart('Top 10 Tipos de Itens', 'Itens mais comuns no inventário', 'inventarioDescricaoBar', topDescricoes.map(s => s[0]), topDescricoes.map(s => s[1]), true);
     }
     
-    // Solicitações - Status pie chart
-    if (categoryId === 'SolicitacoesProntuarios') {
+    // Solicitação de Documentos - Status charts
+    if (categoryId === 'SolicitacaoDocumentos') {
         const statusCount = {};
         const tipoCount = {};
-        const especialidadeCount = {};
         
         data.forEach(item => {
-            const status = item['STATUS'] || 'N/A';
+            const status = item['STATUS DA SOLICITAÇÃO'] || item['STATUS'] || 'N/A';
             statusCount[status] = (statusCount[status] || 0) + 1;
             
             const tipo = item['SOLICITAÇÃO:'] || 'N/A';
-            if (tipo !== 'N/A') {
-                const shortTipo = tipo.split(' - ')[0];
+            if (tipo !== 'N/A' && tipo !== '') {
+                const shortTipo = tipo.split(' - ')[0].trim();
                 tipoCount[shortTipo] = (tipoCount[shortTipo] || 0) + 1;
-            }
-            
-            const esp = item['ESPECIALIDADE ASSISTENCIAL:'] || item['ESPECIALIDADE MEDICINA DO TRABALHO:'];
-            if (esp && esp !== '') {
-                especialidadeCount[esp] = (especialidadeCount[esp] || 0) + 1;
             }
         });
         
         createPieChart('Solicitações por Status', 'Distribuição por status', 'solicitacoesStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
-        createPieChart('Solicitações por Tipo', 'Tipos de solicitação', 'solicitacoesTipoPie', Object.keys(tipoCount), Object.values(tipoCount), 'auto');
         
-        // Top 8 especialidades - medium size
-        const topEsp = Object.entries(especialidadeCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
-        if (topEsp.length > 0) {
-            createPieChart('Top 8 Especialidades', 'Especialidades mais solicitadas', 'solicitacoesEspPie', topEsp.map(s => s[0]), topEsp.map(s => s[1]), 'medium');
+        // Use bar chart for types if there are more than 4
+        const tipoEntries = Object.entries(tipoCount).sort((a, b) => b[1] - a[1]);
+        if (tipoEntries.length > 4) {
+            createBarChart('Solicitações por Tipo', 'Tipos de solicitação', 'solicitacoesTipoBar', tipoEntries.map(s => s[0]), tipoEntries.map(s => s[1]), true);
+        } else {
+            createPieChart('Solicitações por Tipo', 'Tipos de solicitação', 'solicitacoesTipoPie', tipoEntries.map(s => s[0]), tipoEntries.map(s => s[1]), 'auto');
         }
     }
     
