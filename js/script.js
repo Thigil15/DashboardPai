@@ -142,6 +142,11 @@ function configureChartDefaults() {
         Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
         Chart.defaults.font.size = 12;
         Chart.defaults.color = '#64748b';
+        
+        // Register datalabels plugin if available
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
     }
 }
 
