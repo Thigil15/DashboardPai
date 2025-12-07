@@ -145,7 +145,13 @@ function configureChartDefaults() {
         
         // Register datalabels plugin if available
         if (typeof ChartDataLabels !== 'undefined') {
-            Chart.register(ChartDataLabels);
+            try {
+                Chart.register(ChartDataLabels);
+            } catch (error) {
+                console.warn('Falha ao registrar plugin ChartDataLabels:', error);
+            }
+        } else {
+            console.warn('Plugin ChartDataLabels não está disponível. As porcentagens nos gráficos podem não ser exibidas.');
         }
     }
 }
