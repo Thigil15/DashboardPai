@@ -962,7 +962,6 @@ function buildCategoryCharts(categoryId, data) {
             chartOptions = getPieChartOptionsCompact();
         }
         
-        const chartColors = ['#1a91e7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
         const colors = chartColors.slice(0, labels.length);
         
         const chartCard = document.createElement('div');
