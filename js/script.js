@@ -148,6 +148,53 @@ function configureChartDefaults() {
 // Check if Chart.js is loaded
 const isChartJsLoaded = () => typeof Chart !== 'undefined';
 
+// Get standard pie chart options with percentage labels
+function getPieChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 15,
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                        return `${context.label}: ${context.raw} (${percentage}%)`;
+                    }
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 14
+                },
+                formatter: (value, context) => {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return percentage + '%';
+                }
+            }
+        }
+    };
+}
+
+// Get pie chart options with smaller legend (for charts with many items)
+function getPieChartOptionsCompact() {
+    const options = getPieChartOptions();
+    options.plugins.legend.labels.padding = 10;
+    options.plugins.legend.labels.font = { size: 10 };
+    return options;
+}
+
 // =====================================================
 // Data Loading
 // =====================================================
@@ -452,29 +499,7 @@ function buildOverviewCharts() {
                     borderColor: '#fff'
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.raw / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.raw} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
+            options: getPieChartOptions()
         });
     }
     
@@ -498,29 +523,7 @@ function buildOverviewCharts() {
                     borderColor: '#fff'
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.raw / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.raw} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
+            options: getPieChartOptions()
         });
     }
     
@@ -549,30 +552,7 @@ function buildOverviewCharts() {
                     borderColor: '#fff'
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 10,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            font: { size: 10 }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.raw / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.raw} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
+            options: getPieChartOptionsCompact()
         });
     }
     
@@ -596,29 +576,7 @@ function buildOverviewCharts() {
                     borderColor: '#ffffff'
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.raw / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.raw} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
+            options: getPieChartOptions()
         });
     }
     
@@ -648,30 +606,7 @@ function buildOverviewCharts() {
                     borderColor: '#fff'
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 10,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            font: { size: 10 }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.raw / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.raw} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
+            options: getPieChartOptionsCompact()
         });
     }
 }
@@ -759,29 +694,7 @@ function buildCategoryCharts(categoryId, data) {
                             borderColor: '#fff'
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 15,
-                                    usePointStyle: true,
-                                    pointStyle: 'circle'
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = ((context.raw / total) * 100).toFixed(1);
-                                        return `${context.label}: ${context.raw} (${percentage}%)`;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    options: getPieChartOptions()
                 });
                 chartIndex++;
             }
@@ -794,6 +707,10 @@ function buildCategoryCharts(categoryId, data) {
         const setorCount = {};
         const andarCount = {};
         const patrimonioCount = {};
+        const predioCount = {};
+        const salaCount = {};
+        const situacaoCount = {};
+        const descricaoCount = {};
         
         data.forEach(item => {
             const status = item['STATUS'] || 'N/A';
@@ -807,15 +724,37 @@ function buildCategoryCharts(categoryId, data) {
             
             const patrimonio = item['PATRIMÔNIOS - CeAC'] || 'N/A';
             patrimonioCount[patrimonio] = (patrimonioCount[patrimonio] || 0) + 1;
+            
+            const predio = item['PRÉDIO'] || 'N/A';
+            predioCount[predio] = (predioCount[predio] || 0) + 1;
+            
+            const sala = item['SALA'] || 'N/A';
+            salaCount[sala] = (salaCount[sala] || 0) + 1;
+            
+            const situacao = item['SITUAÇÃO'] || 'N/A';
+            situacaoCount[situacao] = (situacaoCount[situacao] || 0) + 1;
+            
+            const descricao = item['DESCRIÇÃO DOS BENS'] || 'N/A';
+            descricaoCount[descricao] = (descricaoCount[descricao] || 0) + 1;
         });
         
         createPieChart('Inventário por Status', 'Distribuição dos itens por status', 'inventarioStatusPie', Object.keys(statusCount), Object.values(statusCount));
         createPieChart('Inventário por Andar', 'Distribuição dos itens por andar', 'inventarioAndarPie', Object.keys(andarCount), Object.values(andarCount));
         createPieChart('Inventário por Tipo de Patrimônio', 'Tipos de patrimônio', 'inventarioPatrimonioPie', Object.keys(patrimonioCount), Object.values(patrimonioCount));
+        createPieChart('Inventário por Prédio', 'Distribuição por edifício', 'inventarioPredioPie', Object.keys(predioCount), Object.values(predioCount));
+        createPieChart('Inventário por Situação', 'Condição dos itens', 'inventarioSituacaoPie', Object.keys(situacaoCount), Object.values(situacaoCount));
         
         // Top 8 sectors
         const topSetores = Object.entries(setorCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
         createPieChart('Top 8 Setores', 'Setores com mais itens', 'inventarioSetorPie', topSetores.map(s => s[0]), topSetores.map(s => s[1]));
+        
+        // Top 10 rooms
+        const topSalas = Object.entries(salaCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        createPieChart('Top 10 Salas', 'Salas com mais itens', 'inventarioSalaPie', topSalas.map(s => s[0]), topSalas.map(s => s[1]));
+        
+        // Top 10 item descriptions
+        const topDescricoes = Object.entries(descricaoCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        createPieChart('Top 10 Tipos de Itens', 'Itens mais comuns no inventário', 'inventarioDescricaoPie', topDescricoes.map(s => s[0]), topDescricoes.map(s => s[1]));
     }
     
     // Solicitações - Status pie chart
