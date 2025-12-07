@@ -655,8 +655,8 @@ body {
 
 .chart-legend-table {
     flex-shrink: 0;
-    min-width: 100px;
-    margin-left: 10px;
+    min-width: 120px;
+    margin-left: 15px;
     display: flex;
     align-items: center;
 }
@@ -676,22 +676,22 @@ body {
 }
 
 .chart-legend-table td {
-    padding: 10px 8px;
-    font-size: 0.9rem;
+    padding: 12px 10px;
+    font-size: 1rem;
     vertical-align: middle;
     white-space: nowrap;
 }
 
 .chart-legend-table .legend-color {
-    width: 24px;
-    padding-right: 10px;
+    width: 30px;
+    padding-right: 12px;
     text-align: center;
 }
 
 .legend-color-box {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     border: 2px solid #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -701,10 +701,10 @@ body {
     text-align: right;
     font-weight: 700;
     color: var(--primary-600);
-    min-width: 65px;
-    padding-left: 12px;
-    padding-right: 4px;
-    font-size: 0.95rem;
+    min-width: 70px;
+    padding-left: 14px;
+    padding-right: 6px;
+    font-size: 1.05rem;
 }
 
 /* =====================================================
