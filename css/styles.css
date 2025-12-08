@@ -657,13 +657,9 @@ body {
 
 .chart-legend-table {
     flex-shrink: 0;
-    min-width: 140px;
+    min-width: 80px;
     display: flex;
     align-items: center;
-    background-color: var(--gray-50);
-    border-radius: 12px;
-    padding: 16px 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .chart-legend-table table {
@@ -673,54 +669,65 @@ body {
 }
 
 .chart-legend-table tbody tr {
-    border-bottom: 1px solid var(--gray-200);
-}
-
-.chart-legend-table tbody tr:last-child {
-    border-bottom: none;
+    /* No border or background */
 }
 
 .chart-legend-table td {
-    padding: 14px 12px;
+    padding: 12px 8px;
     font-size: 1.1rem;
     vertical-align: middle;
-    white-space: nowrap;
 }
 
 .chart-legend-table .legend-color {
     width: 36px;
-    padding-right: 14px;
     text-align: center;
 }
 
 .legend-color-box {
     display: inline-block;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    border: 3px solid #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.chart-legend-table .legend-label {
-    text-align: left;
-    font-weight: 500;
-    color: var(--gray-700);
-    font-size: 0.95rem;
-    padding-right: 16px;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .chart-legend-table .legend-value {
-    text-align: right;
+    text-align: left;
     font-weight: 700;
     color: var(--primary-700);
-    min-width: 70px;
-    padding-left: 12px;
-    padding-right: 8px;
-    font-size: 1.15rem;
+    min-width: 60px;
+    padding-left: 8px;
+    font-size: 1.05rem;
+}
+
+/* Chart Legend Labels (shown below pie charts) */
+.chart-legend-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--gray-100);
+}
+
+.legend-label-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-label-text {
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    font-weight: 500;
 }
 
 /* =====================================================
@@ -847,10 +854,6 @@ td {
     padding: 12px 16px;
     border-bottom: 1px solid var(--gray-100);
     color: var(--gray-700);
-}
-
-tbody tr:hover {
-    background: var(--primary-50);
 }
 
 tbody tr:last-child td {

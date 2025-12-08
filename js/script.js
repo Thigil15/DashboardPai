@@ -258,7 +258,7 @@ function getPieChartOptionsCompact() {
     };
 }
 
-// Create a legend table to show next to pie charts
+// Create a legend table to show next to pie charts (circle + percentage only)
 function createLegendTable(labels, dataValues, colors) {
     const total = dataValues.reduce((a, b) => a + b, 0);
     
@@ -274,7 +274,6 @@ function createLegendTable(labels, dataValues, colors) {
                 <td class="legend-color">
                     <span class="legend-color-box" style="background-color: ${color}"></span>
                 </td>
-                <td class="legend-label">${label}</td>
                 <td class="legend-value">${percentage}%</td>
             </tr>
         `;
@@ -282,6 +281,25 @@ function createLegendTable(labels, dataValues, colors) {
     
     tableHTML += '</tbody></table></div>';
     return tableHTML;
+}
+
+// Create a legend labels section to show below pie charts (circle + name)
+function createLegendLabels(labels, colors) {
+    let labelsHTML = '<div class="chart-legend-labels">';
+    
+    labels.forEach((label, index) => {
+        const color = colors[index];
+        
+        labelsHTML += `
+            <div class="legend-label-item">
+                <span class="legend-color-dot" style="background-color: ${color}"></span>
+                <span class="legend-label-text">${label}</span>
+            </div>
+        `;
+    });
+    
+    labelsHTML += '</div>';
+    return labelsHTML;
 }
 
 // Get horizontal bar chart options (for charts with many items)
@@ -724,6 +742,13 @@ function buildOverviewCharts() {
             chartBody.classList.add('with-legend-table');
             const legendTable = createLegendTable(statusLabels, statusValues, statusColors);
             chartBody.insertAdjacentHTML('beforeend', legendTable);
+            
+            // Add legend labels below the chart
+            const chartCard = statusCtx.closest('.chart-card');
+            if (chartCard) {
+                const legendLabels = createLegendLabels(statusLabels, statusColors);
+                chartCard.insertAdjacentHTML('beforeend', legendLabels);
+            }
         }
     }
     
@@ -762,6 +787,13 @@ function buildOverviewCharts() {
             chartBody.classList.add('with-legend-table');
             const legendTable = createLegendTable(reqLabels, reqValues, reqColors);
             chartBody.insertAdjacentHTML('beforeend', legendTable);
+            
+            // Add legend labels below the chart
+            const chartCard = requestsCtx.closest('.chart-card');
+            if (chartCard) {
+                const legendLabels = createLegendLabels(reqLabels, reqColors);
+                chartCard.insertAdjacentHTML('beforeend', legendLabels);
+            }
         }
     }
     
@@ -975,6 +1007,10 @@ function buildCategoryCharts(categoryId, data) {
                 if (chartBody) {
                     const legendTable = createLegendTable(labels, dataValues, colors);
                     chartBody.insertAdjacentHTML('beforeend', legendTable);
+                    
+                    // Add legend labels below the chart
+                    const legendLabels = createLegendLabels(labels, colors);
+                    chartCard.insertAdjacentHTML('beforeend', legendLabels);
                 }
                 
                 chartIndex++;
