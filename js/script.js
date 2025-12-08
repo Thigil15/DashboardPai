@@ -166,23 +166,15 @@ function getPieChartOptions() {
         maintainAspectRatio: false,
         layout: {
             padding: {
-                top: 20,
-                bottom: 20,
-                left: 20,
-                right: 20
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10
             }
         },
         plugins: {
             legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 15,
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    font: {
-                        size: 12
-                    }
-                }
+                display: false  // Hide default legend since we show custom percentage table
             },
             tooltip: {
                 callbacks: {
@@ -207,23 +199,15 @@ function getPieChartOptionsMedium() {
         maintainAspectRatio: false,
         layout: {
             padding: {
-                top: 20,
-                bottom: 20,
-                left: 20,
-                right: 20
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10
             }
         },
         plugins: {
             legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 12,
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    font: {
-                        size: 11
-                    }
-                }
+                display: false  // Hide default legend since we show custom percentage table
             },
             tooltip: {
                 callbacks: {
@@ -248,23 +232,15 @@ function getPieChartOptionsCompact() {
         maintainAspectRatio: false,
         layout: {
             padding: {
-                top: 20,
-                bottom: 20,
-                left: 20,
-                right: 20
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10
             }
         },
         plugins: {
             legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 8,
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    font: {
-                        size: 10
-                    }
-                }
+                display: false  // Hide default legend since we show custom percentage table
             },
             tooltip: {
                 callbacks: {
@@ -298,6 +274,7 @@ function createLegendTable(labels, dataValues, colors) {
                 <td class="legend-color">
                     <span class="legend-color-box" style="background-color: ${color}"></span>
                 </td>
+                <td class="legend-label">${label}</td>
                 <td class="legend-value">${percentage}%</td>
             </tr>
         `;
