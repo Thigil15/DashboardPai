@@ -133,6 +133,12 @@ const dataCategories = {
         icon: '🚪',
         color: '#2563eb',
         bgColor: '#dbeafe'
+    },
+    'ControleOS': {
+        name: 'Controle de OS',
+        icon: '🔧',
+        color: '#f97316',
+        bgColor: '#ffedd5'
     }
 };
 
@@ -1262,30 +1268,172 @@ function buildCategoryCharts(categoryId, data) {
         createPieChart('Tipos de Mobiliário', 'Distribuição por tipo de item', 'mobiliarioPie', Object.keys(items), Object.values(items), 'auto');
     }
     
-    // ControleOS - if exists
+    // ControleOS - Comprehensive analysis
     if (categoryId === 'ControleOS') {
         const statusCount = {};
-        const tipoCount = {};
+        const especialidadeCount = {};
+        const setorCount = {};
+        const mesCount = {};
+        const anoCount = {};
+        const andarCount = {};
+        let totalExecutado = 0;
+        let totalForaDoPrazo = 0;
+        let totalPendente = 0;
         
+        // Clean and process data
         data.forEach(item => {
-            // Try to find status and type fields
-            Object.keys(item).forEach(key => {
-                if (key.toLowerCase().includes('status')) {
-                    const status = item[key] || 'SEM STATUS';
-                    statusCount[status] = (statusCount[status] || 0) + 1;
+            // Clean status - handle #REF! errors and empty values
+            let status = (item['Status'] || '').trim();
+            
+            // Replace Excel error with descriptive label
+            if (status === '#REF!') {
+                status = 'Erro de Referência';
+            } else if (status === '' || status === ' ') {
+                status = 'Sem Status';
+            }
+            
+            statusCount[status] = (statusCount[status] || 0) + 1;
+            
+            // Track execution metrics
+            if (status.toLowerCase().includes('executado')) {
+                totalExecutado++;
+                if (status.toLowerCase().includes('fora do prazo')) {
+                    totalForaDoPrazo++;
                 }
-                if (key.toLowerCase().includes('tipo')) {
-                    const tipo = item[key] || 'SEM TIPO';
-                    tipoCount[tipo] = (tipoCount[tipo] || 0) + 1;
-                }
-            });
+            } else if (status.toLowerCase().includes('pendente')) {
+                totalPendente++;
+            }
+            
+            // Count by specialty
+            const especialidade = (item['Especialidade'] || '').trim() || 'Sem Especialidade';
+            if (especialidade !== 'Sem Especialidade') {
+                especialidadeCount[especialidade] = (especialidadeCount[especialidade] || 0) + 1;
+            }
+            
+            // Count by sector
+            const setor = (item['Setor'] || '').trim() || 'Sem Setor';
+            if (setor !== 'Sem Setor') {
+                setorCount[setor] = (setorCount[setor] || 0) + 1;
+            }
+            
+            // Count by month
+            const mes = (item['Mês'] || '').trim();
+            if (mes) {
+                mesCount[mes] = (mesCount[mes] || 0) + 1;
+            }
+            
+            // Count by year
+            const ano = (item['Ano'] || '').trim();
+            if (ano) {
+                anoCount[ano] = (anoCount[ano] || 0) + 1;
+            }
+            
+            // Count by floor
+            const andar = (item['Andar\nSolicitante'] || item['Andar'] || '').trim();
+            if (andar) {
+                andarCount[andar] = (andarCount[andar] || 0) + 1;
+            }
         });
         
+        // Chart 1: Status Distribution
         if (Object.keys(statusCount).length > 0) {
-            createPieChart('Distribuição por Status', 'Status dos registros', 'controleOSStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
+            createPieChart(
+                'Distribuição por Status', 
+                'Status das ordens de serviço',
+                'controleOSStatusPie', 
+                Object.keys(statusCount), 
+                Object.values(statusCount), 
+                'auto'
+            );
         }
-        if (Object.keys(tipoCount).length > 0) {
-            createPieChart('Distribuição por Tipo', 'Tipos de registros', 'controleOSTipoPie', Object.keys(tipoCount), Object.values(tipoCount), 'auto');
+        
+        // Chart 2: Top Specialties
+        const topEspecialidades = Object.entries(especialidadeCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+        if (topEspecialidades.length > 0) {
+            if (topEspecialidades.length > 6) {
+                createBarChart(
+                    'Top 10 Especialidades',
+                    'Especialidades com mais solicitações',
+                    'controleOSEspecialidadeBar',
+                    topEspecialidades.map(e => e[0]),
+                    topEspecialidades.map(e => e[1]),
+                    true
+                );
+            } else {
+                createPieChart(
+                    'Distribuição por Especialidade',
+                    'Especialidades solicitadas',
+                    'controleOSEspecialidadePie',
+                    topEspecialidades.map(e => e[0]),
+                    topEspecialidades.map(e => e[1]),
+                    'auto'
+                );
+            }
+        }
+        
+        // Chart 3: Top Sectors
+        const topSetores = Object.entries(setorCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+        if (topSetores.length > 0) {
+            createBarChart(
+                'Top 10 Setores',
+                'Setores com mais solicitações',
+                'controleOSSetorBar',
+                topSetores.map(s => s[0]),
+                topSetores.map(s => s[1]),
+                true
+            );
+        }
+        
+        // Chart 4: Distribution by Month
+        const mesEntries = Object.entries(mesCount);
+        if (mesEntries.length > 0) {
+            // Order months chronologically
+            const monthOrder = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 
+                              'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+            const orderedMeses = mesEntries.sort((a, b) => {
+                const indexA = monthOrder.indexOf(a[0].toUpperCase());
+                const indexB = monthOrder.indexOf(b[0].toUpperCase());
+                return indexA - indexB;
+            });
+            
+            createBarChart(
+                'Distribuição por Mês',
+                'Volume de solicitações por mês',
+                'controleOSMesBar',
+                orderedMeses.map(m => m[0]),
+                orderedMeses.map(m => m[1]),
+                false
+            );
+        }
+        
+        // Chart 5: Distribution by Year
+        const anoEntries = Object.entries(anoCount).sort((a, b) => a[0] - b[0]);
+        if (anoEntries.length > 0) {
+            createPieChart(
+                'Distribuição por Ano',
+                'Volume de solicitações por ano',
+                'controleOSAnoPie',
+                anoEntries.map(a => a[0]),
+                anoEntries.map(a => a[1]),
+                'auto'
+            );
+        }
+        
+        // Chart 6: Distribution by Floor
+        const andarEntries = Object.entries(andarCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        if (andarEntries.length > 0) {
+            createBarChart(
+                'Distribuição por Andar',
+                'Solicitações por andar',
+                'controleOSAndarBar',
+                andarEntries.map(a => a[0]),
+                andarEntries.map(a => a[1]),
+                true
+            );
         }
     }
     
