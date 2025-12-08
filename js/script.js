@@ -1282,12 +1282,12 @@ function buildCategoryCharts(categoryId, data) {
         
         // Clean and process data
         data.forEach(item => {
-            // Clean status - handle #REF! errors and empty values
+            // Clean status - handle empty values and skip #REF! errors
             let status = (item['Status'] || '').trim();
             
-            // Replace Excel error with descriptive label
+            // Skip Excel reference errors (not real data)
             if (status === '#REF!') {
-                status = 'Erro de Referência';
+                return; // Skip this record
             } else if (status === '' || status === ' ') {
                 status = 'Sem Status';
             }
