@@ -710,7 +710,7 @@ function buildOverviewCharts() {
     // Chart 1: Inventory Status (Pie)
     const statusCount = {};
     inventario.forEach(item => {
-        const status = item['STATUS'] || 'N/A';
+        const status = item['STATUS'] || 'SEM STATUS';
         statusCount[status] = (statusCount[status] || 0) + 1;
     });
     
@@ -755,7 +755,7 @@ function buildOverviewCharts() {
     // Chart 2: Requests Status (Pie)
     const requestStatusCount = {};
     solicitacoes.forEach(item => {
-        const status = item['STATUS DA SOLICITAÇÃO'] || item['STATUS'] || 'N/A';
+        const status = item['STATUS DA SOLICITAÇÃO'] || item['STATUS'] || 'SEM STATUS';
         requestStatusCount[status] = (requestStatusCount[status] || 0) + 1;
     });
     
@@ -800,7 +800,7 @@ function buildOverviewCharts() {
     // Chart 3: Inventory by Sector (Horizontal Bar - Top 10)
     const sectorCount = {};
     inventario.forEach(item => {
-        const setor = item['SETOR'] || 'N/A';
+        const setor = item['SETOR'] || 'SEM SETOR';
         sectorCount[setor] = (sectorCount[setor] || 0) + 1;
     });
     
@@ -828,7 +828,7 @@ function buildOverviewCharts() {
     // Chart 4: Inventory by Floor (Bar Chart)
     const floorCount = {};
     inventario.forEach(item => {
-        const andar = item['ANDAR'] || 'N/A';
+        const andar = item['ANDAR'] || 'SEM ANDAR';
         floorCount[andar] = (floorCount[andar] || 0) + 1;
     });
     
@@ -1065,28 +1065,28 @@ function buildCategoryCharts(categoryId, data) {
         const descricaoCount = {};
         
         data.forEach(item => {
-            const status = item['STATUS'] || 'N/A';
+            const status = item['STATUS'] || 'SEM STATUS';
             statusCount[status] = (statusCount[status] || 0) + 1;
             
-            const setor = item['SETOR'] || 'N/A';
+            const setor = item['SETOR'] || 'SEM SETOR';
             setorCount[setor] = (setorCount[setor] || 0) + 1;
             
-            const andar = item['ANDAR'] || 'N/A';
+            const andar = item['ANDAR'] || 'SEM ANDAR';
             andarCount[andar] = (andarCount[andar] || 0) + 1;
             
-            const patrimonio = item['PATRIMÔNIOS - CeAC'] || 'N/A';
+            const patrimonio = item['PATRIMÔNIOS - CeAC'] || 'SEM PATRIMÔNIO';
             patrimonioCount[patrimonio] = (patrimonioCount[patrimonio] || 0) + 1;
             
-            const predio = item['PRÉDIO'] || 'N/A';
+            const predio = item['PRÉDIO'] || 'SEM PRÉDIO';
             predioCount[predio] = (predioCount[predio] || 0) + 1;
             
-            const sala = item['SALA'] || 'N/A';
+            const sala = item['SALA'] || 'SEM SALA';
             salaCount[sala] = (salaCount[sala] || 0) + 1;
             
-            const situacao = item['SITUAÇÃO'] || 'N/A';
+            const situacao = item['SITUAÇÃO'] || 'SEM SITUAÇÃO';
             situacaoCount[situacao] = (situacaoCount[situacao] || 0) + 1;
             
-            const descricao = item['DESCRIÇÃO DOS BENS'] || 'N/A';
+            const descricao = item['DESCRIÇÃO DOS BENS'] || 'SEM DESCRIÇÃO';
             descricaoCount[descricao] = (descricaoCount[descricao] || 0) + 1;
         });
         
@@ -1119,13 +1119,15 @@ function buildCategoryCharts(categoryId, data) {
         const tipoCount = {};
         
         data.forEach(item => {
-            const status = item['STATUS DA SOLICITAÇÃO'] || item['STATUS'] || 'N/A';
+            const status = item['STATUS DA SOLICITAÇÃO'] || item['STATUS'] || 'SEM STATUS';
             statusCount[status] = (statusCount[status] || 0) + 1;
             
-            const tipo = item['SOLICITAÇÃO:'] || 'N/A';
-            if (tipo !== 'N/A' && tipo !== '') {
+            const tipo = item['SOLICITAÇÃO:'] || '';
+            if (tipo && tipo !== '') {
                 const shortTipo = tipo.split(' - ')[0].trim();
                 tipoCount[shortTipo] = (tipoCount[shortTipo] || 0) + 1;
+            } else {
+                tipoCount['SEM TIPO'] = (tipoCount['SEM TIPO'] || 0) + 1;
             }
         });
         
@@ -1144,7 +1146,7 @@ function buildCategoryCharts(categoryId, data) {
     if (categoryId === 'WSEngenhariaEquipe') {
         const localCount = {};
         data.forEach(item => {
-            const local = item['LocalAtualInstituto'] || 'N/A';
+            const local = item['LocalAtualInstituto'] || 'SEM LOCAL';
             const qty = parseInt(item['QuantidadePrestadores'] || 0);
             localCount[local] = (localCount[local] || 0) + qty;
         });
@@ -1159,7 +1161,7 @@ function buildCategoryCharts(categoryId, data) {
         let totalMesas = 0, totalCadeiras = 0, totalMicros = 0, totalImpressoras = 0, totalGaveteiros = 0, totalArmarios = 0;
         
         data.forEach(item => {
-            const instituto = item['Instituto'] || 'N/A';
+            const instituto = item['Instituto'] || 'SEM INSTITUTO';
             const total = parseInt(item['QuantidadeMesa'] || 0) + 
                           parseInt(item['QuantidadeCadeiras'] || 0) + 
                           parseInt(item['QuantidadeMicrocomputadores'] || 0);
@@ -1191,11 +1193,11 @@ function buildCategoryCharts(categoryId, data) {
         const espCount = {};
         const localCount = {};
         data.forEach(item => {
-            const esp = item['Especialidade'] || 'N/A';
+            const esp = item['Especialidade'] || 'SEM ESPECIALIDADE';
             const qty = parseInt(item['QuantidadePessoas'] || 0);
             espCount[esp] = (espCount[esp] || 0) + qty;
             
-            const local = item['LocalAtual'] || 'N/A';
+            const local = item['LocalAtual'] || 'SEM LOCAL';
             localCount[local] = (localCount[local] || 0) + qty;
         });
         
@@ -1231,7 +1233,7 @@ function buildCategoryCharts(categoryId, data) {
             const qty = parseInt(item['QuantidadePessoas'] || item['QuantidadePrestadores'] || 0);
             cargoCount[cargo] = (cargoCount[cargo] || 0) + qty;
             
-            const local = item['Local Atual'] || item['LocalAtual'] || 'N/A';
+            const local = item['Local Atual'] || item['LocalAtual'] || 'SEM LOCAL';
             localCount[local] = (localCount[local] || 0) + qty;
         });
         
@@ -1269,11 +1271,11 @@ function buildCategoryCharts(categoryId, data) {
             // Try to find status and type fields
             Object.keys(item).forEach(key => {
                 if (key.toLowerCase().includes('status')) {
-                    const status = item[key] || 'N/A';
+                    const status = item[key] || 'SEM STATUS';
                     statusCount[status] = (statusCount[status] || 0) + 1;
                 }
                 if (key.toLowerCase().includes('tipo')) {
-                    const tipo = item[key] || 'N/A';
+                    const tipo = item[key] || 'SEM TIPO';
                     tipoCount[tipo] = (tipoCount[tipo] || 0) + 1;
                 }
             });
@@ -1294,7 +1296,7 @@ function buildCategoryCharts(categoryId, data) {
         data.forEach(item => {
             Object.keys(item).forEach(key => {
                 if (key.toLowerCase().includes('status')) {
-                    const status = item[key] || 'N/A';
+                    const status = item[key] || 'SEM STATUS';
                     statusCount[status] = (statusCount[status] || 0) + 1;
                 }
             });
