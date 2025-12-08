@@ -643,7 +643,7 @@ body {
 .chart-body.with-legend-table {
     display: flex;
     flex-direction: row;
-    gap: 24px;
+    gap: 20px;
     align-items: center;
     justify-content: center;
     padding: 30px 20px;
@@ -651,14 +651,19 @@ body {
 
 .chart-body.with-legend-table canvas {
     flex-shrink: 0;
+    max-width: 280px !important;
+    max-height: 280px !important;
 }
 
 .chart-legend-table {
     flex-shrink: 0;
-    min-width: 70px;
-    margin-left: 10px;
+    min-width: 140px;
     display: flex;
     align-items: center;
+    background-color: var(--gray-50);
+    border-radius: 12px;
+    padding: 16px 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .chart-legend-table table {
@@ -676,34 +681,46 @@ body {
 }
 
 .chart-legend-table td {
-    padding: 10px 6px;
-    font-size: 0.9rem;
+    padding: 14px 12px;
+    font-size: 1.1rem;
     vertical-align: middle;
     white-space: nowrap;
 }
 
 .chart-legend-table .legend-color {
-    width: 24px;
-    padding-right: 10px;
+    width: 36px;
+    padding-right: 14px;
     text-align: center;
 }
 
 .legend-color-box {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    border: 2px solid #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.chart-legend-table .legend-label {
+    text-align: left;
+    font-weight: 500;
+    color: var(--gray-700);
+    font-size: 0.95rem;
+    padding-right: 16px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chart-legend-table .legend-value {
     text-align: right;
     font-weight: 700;
-    color: var(--primary-600);
-    min-width: 50px;
-    padding-left: 8px;
-    font-size: 0.95rem;
+    color: var(--primary-700);
+    min-width: 70px;
+    padding-left: 12px;
+    padding-right: 8px;
+    font-size: 1.15rem;
 }
 
 /* =====================================================
