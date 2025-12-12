@@ -1145,6 +1145,13 @@ function checkIfLateForPratica(horarioEntrada, horarioEscala, toleranciaMinutos 
 /**
  * Determines if an attendance record belongs to Theory or Practice
  * This helps prevent duplication by properly categorizing records
+ * 
+ * Note: This function is duplicated in code.gs for server-side processing.
+ * Both implementations are needed because:
+ * - Frontend: Processes data when displayed in the dashboard (client-side)
+ * - Backend (code.gs): Processes data when fetching from Google Sheets (server-side)
+ * The logic must be consistent in both places.
+ * 
  * @param {Object} record - The attendance record
  * @returns {string} - 'Teoria' or 'Prática'
  */
@@ -1792,7 +1799,10 @@ function buildCategoryCharts(categoryId, data) {
         const TEORIA_MINUTO_LIMITE = 10;
         
         data.forEach(item => {
-            const tipoAula = (item['TipoAula'] || item['Tipo'] || 'Teoria').toString();
+            // Use determineAttendanceType function for consistent classification
+            const tipoAula = item['TipoAula'] || item['Tipo'] ? 
+                (item['TipoAula'] || item['Tipo']).toString() : 
+                determineAttendanceType(item);
             const aluno = item['Aluno'] || item['Nome'] || 'Sem Nome';
             const horario = item['HorarioEntrada'] || item['Horario'] || '';
             const dia = item['Dia'] || item['Data'] || 'Sem Data';

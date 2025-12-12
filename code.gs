@@ -264,6 +264,13 @@ function processRegistroPonto(data) {
 
 /**
  * Determina o tipo de aula baseado nos dados do registro.
+ * 
+ * Nota: Esta função é duplicada em js/script.js para processamento client-side.
+ * Ambas implementações são necessárias porque:
+ * - Backend (aqui): Processa dados ao buscar do Google Sheets (server-side)
+ * - Frontend (js/script.js): Processa dados ao exibir no dashboard (client-side)
+ * A lógica deve ser consistente em ambos os lugares.
+ * 
  * @param {Object} item - Registro de ponto
  * @return {string} 'Teoria' ou 'Prática'
  */
