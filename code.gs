@@ -103,7 +103,16 @@ function getAllSheetsData() {
     // Pula abas ocultas se necessário
     // if (sheet.isSheetHidden()) return; 
 
-    const data = getSheetDataAsJson(sheet);
+    let data = getSheetDataAsJson(sheet);
+    
+    // Process special sheets for attendance tracking
+    if (sheetName === 'EscalaTeoria') {
+      data = processEscalaTeoria(data);
+    } else if (sheetName === 'EscalaPratica') {
+      data = processEscalaPratica(data);
+    } else if (sheetName === 'RegistroPonto') {
+      data = processRegistroPonto(data);
+    }
     
     if (data && data.length > 0) {
       payload[sheetName] = data;
@@ -148,7 +157,244 @@ function getSheetDataAsJson(sheet) {
 }
 
 // =================================================================
-// 4. HELPERS
+// 4. ATTENDANCE PROCESSING FUNCTIONS
+// =================================================================
+
+/**
+ * Processa dados da aba EscalaTeoria.
+ * Em Teoria, todos os alunos estão escalados independente do F na escala.
+ * O horário é fixo: 18h (tolerância até 18:10).
+ * @param {Array} data - Array de objetos com dados da escala de teoria
+ * @return {Array} Dados processados
+ */
+function processEscalaTeoria(data) {
+  if (!data || data.length === 0) return data;
+  
+  return data.map(item => {
+    // Clone the item to avoid mutation
+    const processed = Object.assign({}, item);
+    
+    // Set type as Theory
+    processed.TipoAula = 'Teoria';
+    
+    // In theory, all students are scheduled regardless of F
+    // Override any "F" status - everyone must attend
+    processed.Escalado = true;
+    
+    // Set fixed time for theory classes: 18:00
+    processed.HorarioInicio = '18:00';
+    processed.HorarioLimite = '18:10'; // Grace period
+    
+    return processed;
+  });
+}
+
+/**
+ * Processa dados da aba EscalaPratica.
+ * Em Prática, F na escala significa folga (aluno não precisa comparecer).
+ * @param {Array} data - Array de objetos com dados da escala prática
+ * @return {Array} Dados processados
+ */
+function processEscalaPratica(data) {
+  if (!data || data.length === 0) return data;
+  
+  return data.map(item => {
+    // Clone the item to avoid mutation
+    const processed = Object.assign({}, item);
+    
+    // Set type as Practice
+    processed.TipoAula = 'Prática';
+    
+    // Check if student has "F" (Folga/day off)
+    const escala = String(item.Escala || item.Status || '').toUpperCase();
+    processed.Escalado = escala !== 'F' && escala !== 'FOLGA';
+    
+    return processed;
+  });
+}
+
+/**
+ * Processa dados da aba RegistroPonto.
+ * Separa registros entre Teoria e Prática para evitar duplicação.
+ * Aplica regras de atraso apropriadas para cada tipo.
+ * @param {Array} data - Array de objetos com registros de ponto
+ * @return {Array} Dados processados sem duplicação
+ */
+function processRegistroPonto(data) {
+  if (!data || data.length === 0) return data;
+  
+  // Use a Map to track unique records and prevent duplication
+  const uniqueRecords = new Map();
+  
+  data.forEach(item => {
+    // Create a unique key based on student, date, and type
+    const aluno = item.Aluno || item.Nome || '';
+    const data = item.Data || item.Dia || '';
+    const tipo = determineAttendanceType(item);
+    const uniqueKey = `${aluno}_${data}_${tipo}`;
+    
+    // Only add if not already exists (prevents duplication)
+    if (!uniqueRecords.has(uniqueKey)) {
+      // Clone and process the item
+      const processed = Object.assign({}, item);
+      
+      // Set the determined type
+      processed.TipoAula = tipo;
+      
+      // Calculate lateness based on type
+      const horarioEntrada = item.HorarioEntrada || item.Horario || '';
+      
+      if (tipo === 'Teoria') {
+        // Theory: fixed time 18:00, late if after 18:10
+        processed.Atraso = isLateForTeoria(horarioEntrada);
+        processed.HorarioEscala = '18:00';
+        processed.ToleranciaAte = '18:10';
+      } else {
+        // Practice: use scheduled time
+        const horarioEscala = item.HorarioEscala || item.HorarioInicio || '';
+        processed.Atraso = isLateForPratica(horarioEntrada, horarioEscala);
+      }
+      
+      uniqueRecords.set(uniqueKey, processed);
+    }
+  });
+  
+  return Array.from(uniqueRecords.values());
+}
+
+/**
+ * Determina o tipo de aula baseado nos dados do registro.
+ * @param {Object} item - Registro de ponto
+ * @return {string} 'Teoria' ou 'Prática'
+ */
+function determineAttendanceType(item) {
+  // Check explicit type field first
+  const tipo = String(item.TipoAula || item.Tipo || '').toLowerCase();
+  
+  if (tipo.includes('teoria') || tipo.includes('theory')) {
+    return 'Teoria';
+  }
+  
+  if (tipo.includes('pratica') || tipo.includes('prática') || tipo.includes('practice')) {
+    return 'Prática';
+  }
+  
+  // If no explicit type, try to infer from scheduled time
+  // Theory classes are always at 18:00
+  const horario = item.HorarioEscala || item.HorarioInicio || '';
+  if (horario) {
+    const hora = parseHour(horario);
+    if (hora === 18) {
+      return 'Teoria';
+    }
+  }
+  
+  // Default to Practice
+  return 'Prática';
+}
+
+/**
+ * Verifica se houve atraso em aula de Teoria.
+ * Teoria começa às 18h, tolerância até 18:10.
+ * @param {string|Date} horario - Horário de entrada
+ * @return {boolean} True se atrasou
+ */
+function isLateForTeoria(horario) {
+  if (!horario) return false;
+  
+  const hora = parseHour(horario);
+  const minuto = parseMinute(horario);
+  
+  // Late if after 18:10
+  if (hora > 18) return true;
+  if (hora === 18 && minuto > 10) return true;
+  
+  return false;
+}
+
+/**
+ * Verifica se houve atraso em aula Prática.
+ * @param {string|Date} horarioEntrada - Horário de entrada
+ * @param {string|Date} horarioEscala - Horário escalado
+ * @param {number} tolerancia - Tolerância em minutos (default: 10)
+ * @return {boolean} True se atrasou
+ */
+function isLateForPratica(horarioEntrada, horarioEscala, tolerancia) {
+  tolerancia = tolerancia || 10;
+  
+  if (!horarioEntrada || !horarioEscala) return false;
+  
+  const horaEntrada = parseHour(horarioEntrada);
+  const minutoEntrada = parseMinute(horarioEntrada);
+  
+  const horaEscala = parseHour(horarioEscala);
+  const minutoEscala = parseMinute(horarioEscala);
+  
+  // Calculate limit time with tolerance
+  const limiteMinutos = minutoEscala + tolerancia;
+  const horaLimite = horaEscala + Math.floor(limiteMinutos / 60);
+  const minutoLimite = limiteMinutos % 60;
+  
+  // Compare
+  const entradaEmMinutos = horaEntrada * 60 + minutoEntrada;
+  const limiteEmMinutos = horaLimite * 60 + minutoLimite;
+  
+  return entradaEmMinutos > limiteEmMinutos;
+}
+
+/**
+ * Extrai a hora de uma string de horário ou Date.
+ * @param {string|Date} horario
+ * @return {number} Hora (0-23)
+ */
+function parseHour(horario) {
+  if (horario instanceof Date) {
+    return horario.getHours();
+  }
+  
+  const str = String(horario);
+  
+  // ISO format
+  if (str.includes('T')) {
+    return new Date(str).getHours();
+  }
+  
+  // HH:MM format
+  if (str.includes(':')) {
+    return parseInt(str.split(':')[0], 10) || 0;
+  }
+  
+  return 0;
+}
+
+/**
+ * Extrai os minutos de uma string de horário ou Date.
+ * @param {string|Date} horario
+ * @return {number} Minutos (0-59)
+ */
+function parseMinute(horario) {
+  if (horario instanceof Date) {
+    return horario.getMinutes();
+  }
+  
+  const str = String(horario);
+  
+  // ISO format
+  if (str.includes('T')) {
+    return new Date(str).getMinutes();
+  }
+  
+  // HH:MM format
+  if (str.includes(':')) {
+    const parts = str.split(':');
+    return parseInt(parts[1], 10) || 0;
+  }
+  
+  return 0;
+}
+
+// =================================================================
+// 5. HELPERS
 // =================================================================
 
 function showOutputModal(content) {

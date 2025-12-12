@@ -139,6 +139,24 @@ const dataCategories = {
         icon: '🔧',
         color: '#f97316',
         bgColor: '#ffedd5'
+    },
+    'EscalaTeoria': {
+        name: 'Escala Teoria',
+        icon: '📚',
+        color: '#3b82f6',
+        bgColor: '#dbeafe'
+    },
+    'EscalaPratica': {
+        name: 'Escala Prática',
+        icon: '🔬',
+        color: '#10b981',
+        bgColor: '#d1fae5'
+    },
+    'RegistroPonto': {
+        name: 'Registro de Ponto',
+        icon: '⏰',
+        color: '#8b5cf6',
+        bgColor: '#ede9fe'
     }
 };
 
@@ -618,6 +636,9 @@ function showOverview() {
 function buildOverviewMetrics() {
     const inventario = allData['InventarioCeaAC2025'] || [];
     const solicitacoes = allData['SolicitacaoDocumentos'] || [];
+    const registroPonto = allData['RegistroPonto'] || [];
+    const escalaTeoria = allData['EscalaTeoria'] || [];
+    const escalaPratica = allData['EscalaPratica'] || [];
     
     // Count inventory by status
     const emUso = inventario.filter(item => item['STATUS'] === 'EM USO').length;
@@ -649,7 +670,27 @@ function buildOverviewMetrics() {
         }
     });
     
-    metricsGrid.innerHTML = `
+    // Count attendance records by type
+    let totalTeoria = 0;
+    let totalPratica = 0;
+    let atrasosTeoria = 0;
+    
+    registroPonto.forEach(item => {
+        const tipo = determineAttendanceType(item);
+        if (tipo === 'Teoria') {
+            totalTeoria++;
+            // Check for late arrivals in theory (after 18:10)
+            const horario = item['HorarioEntrada'] || item['Horario'] || '';
+            if (horario && checkIfLateForTeoria(horario, 18, 10)) {
+                atrasosTeoria++;
+            }
+        } else {
+            totalPratica++;
+        }
+    });
+    
+    // Build metrics HTML
+    let metricsHTML = `
         <div class="metric-card" style="--metric-color: #1a91e7; --metric-bg: #e8f4fd;">
             <div class="metric-header">
                 <div class="metric-icon">📦</div>
@@ -699,6 +740,43 @@ function buildOverviewMetrics() {
             <div class="metric-sublabel">${totalMesas} mesas, ${totalCadeiras} cadeiras</div>
         </div>
     `;
+    
+    // Add attendance metrics if data is available
+    if (registroPonto.length > 0 || escalaTeoria.length > 0 || escalaPratica.length > 0) {
+        metricsHTML += `
+            <div class="metric-card" style="--metric-color: #3b82f6; --metric-bg: #dbeafe;">
+                <div class="metric-header">
+                    <div class="metric-icon">📚</div>
+                </div>
+                <div class="metric-value">${formatNumber(escalaTeoria.length || totalTeoria)}</div>
+                <div class="metric-label">Aulas Teoria</div>
+                <div class="metric-sublabel">Início: 18h (tolerância 10min)</div>
+            </div>
+            <div class="metric-card" style="--metric-color: #10b981; --metric-bg: #d1fae5;">
+                <div class="metric-header">
+                    <div class="metric-icon">🔬</div>
+                </div>
+                <div class="metric-value">${formatNumber(escalaPratica.length || totalPratica)}</div>
+                <div class="metric-label">Aulas Prática</div>
+                <div class="metric-sublabel">Horários variáveis</div>
+            </div>
+        `;
+        
+        if (registroPonto.length > 0) {
+            metricsHTML += `
+                <div class="metric-card" style="--metric-color: #8b5cf6; --metric-bg: #ede9fe;">
+                    <div class="metric-header">
+                        <div class="metric-icon">⏰</div>
+                    </div>
+                    <div class="metric-value">${formatNumber(registroPonto.length)}</div>
+                    <div class="metric-label">Registros de Ponto</div>
+                    <div class="metric-sublabel">${atrasosTeoria} atrasos em teoria</div>
+                </div>
+            `;
+        }
+    }
+    
+    metricsGrid.innerHTML = metricsHTML;
 }
 
 function buildOverviewCharts() {
@@ -938,6 +1016,171 @@ function buildCategoryMetrics(categoryId, data) {
     // Clear metrics container - we'll use charts only
     const metricsContainer = document.getElementById('category-metrics');
     metricsContainer.innerHTML = '';
+}
+
+// =====================================================
+// Attendance Time Validation Functions
+// =====================================================
+
+/**
+ * Checks if a student is late for Theory class
+ * Theory classes start at 18:00, with a grace period until 18:10
+ * @param {string} horarioEntrada - The check-in time (format: HH:MM or HH:MM:SS or ISO string)
+ * @param {number} horaLimite - The hour limit (18 for 18:00)
+ * @param {number} minutoLimite - The minute limit (10 for 18:10 tolerance)
+ * @returns {boolean} - True if the student is late
+ */
+function checkIfLateForTeoria(horarioEntrada, horaLimite, minutoLimite) {
+    if (!horarioEntrada) return false;
+    
+    try {
+        let hora, minuto;
+        
+        // Handle different time formats
+        if (typeof horarioEntrada === 'string') {
+            if (horarioEntrada.includes('T')) {
+                // ISO format (e.g., 2025-01-01T18:15:00.000Z)
+                const date = new Date(horarioEntrada);
+                hora = date.getHours();
+                minuto = date.getMinutes();
+            } else if (horarioEntrada.includes(':')) {
+                // Time format (e.g., 18:15 or 18:15:00)
+                const parts = horarioEntrada.split(':');
+                hora = parseInt(parts[0], 10);
+                minuto = parseInt(parts[1], 10);
+            } else {
+                return false;
+            }
+        } else if (horarioEntrada instanceof Date) {
+            hora = horarioEntrada.getHours();
+            minuto = horarioEntrada.getMinutes();
+        } else {
+            return false;
+        }
+        
+        // Check if late (after 18:10 for theory)
+        if (hora > horaLimite) {
+            return true;
+        } else if (hora === horaLimite && minuto > minutoLimite) {
+            return true;
+        }
+        
+        return false;
+    } catch (e) {
+        console.warn('Error parsing time:', horarioEntrada, e);
+        return false;
+    }
+}
+
+/**
+ * Checks if a student is late for Practice class
+ * Practice classes have variable start times based on schedule
+ * @param {string} horarioEntrada - The check-in time
+ * @param {string} horarioEscala - The scheduled start time
+ * @param {number} toleranciaMinutos - Grace period in minutes (default: 10)
+ * @returns {boolean} - True if the student is late
+ */
+function checkIfLateForPratica(horarioEntrada, horarioEscala, toleranciaMinutos = 10) {
+    if (!horarioEntrada || !horarioEscala) return false;
+    
+    try {
+        // Parse check-in time
+        let horaEntrada, minutoEntrada;
+        if (typeof horarioEntrada === 'string') {
+            if (horarioEntrada.includes('T')) {
+                const date = new Date(horarioEntrada);
+                horaEntrada = date.getHours();
+                minutoEntrada = date.getMinutes();
+            } else if (horarioEntrada.includes(':')) {
+                const parts = horarioEntrada.split(':');
+                horaEntrada = parseInt(parts[0], 10);
+                minutoEntrada = parseInt(parts[1], 10);
+            } else {
+                return false;
+            }
+        } else if (horarioEntrada instanceof Date) {
+            horaEntrada = horarioEntrada.getHours();
+            minutoEntrada = horarioEntrada.getMinutes();
+        } else {
+            return false;
+        }
+        
+        // Parse scheduled time
+        let horaEscala, minutoEscala;
+        if (typeof horarioEscala === 'string') {
+            if (horarioEscala.includes('T')) {
+                const date = new Date(horarioEscala);
+                horaEscala = date.getHours();
+                minutoEscala = date.getMinutes();
+            } else if (horarioEscala.includes(':')) {
+                const parts = horarioEscala.split(':');
+                horaEscala = parseInt(parts[0], 10);
+                minutoEscala = parseInt(parts[1], 10);
+            } else {
+                return false;
+            }
+        } else if (horarioEscala instanceof Date) {
+            horaEscala = horarioEscala.getHours();
+            minutoEscala = horarioEscala.getMinutes();
+        } else {
+            return false;
+        }
+        
+        // Calculate limit time with tolerance
+        const limiteMinutos = minutoEscala + toleranciaMinutos;
+        const horaLimite = horaEscala + Math.floor(limiteMinutos / 60);
+        const minutoLimite = limiteMinutos % 60;
+        
+        // Check if late
+        const entradaEmMinutos = horaEntrada * 60 + minutoEntrada;
+        const limiteEmMinutos = horaLimite * 60 + minutoLimite;
+        
+        return entradaEmMinutos > limiteEmMinutos;
+    } catch (e) {
+        console.warn('Error parsing times:', horarioEntrada, horarioEscala, e);
+        return false;
+    }
+}
+
+/**
+ * Determines if an attendance record belongs to Theory or Practice
+ * This helps prevent duplication by properly categorizing records
+ * @param {Object} record - The attendance record
+ * @returns {string} - 'Teoria' or 'Prática'
+ */
+function determineAttendanceType(record) {
+    // Check explicit type field first
+    const tipo = (record.TipoAula || record.Tipo || '').toString().toLowerCase();
+    
+    if (tipo.includes('teoria') || tipo.includes('theory')) {
+        return 'Teoria';
+    }
+    
+    if (tipo.includes('pratica') || tipo.includes('prática') || tipo.includes('practice')) {
+        return 'Prática';
+    }
+    
+    // If no explicit type, try to infer from time
+    // Theory classes are always at 18:00
+    const horario = record.HorarioEscala || record.HorarioInicio || '';
+    if (horario) {
+        let hora;
+        if (typeof horario === 'string') {
+            if (horario.includes('T')) {
+                hora = new Date(horario).getHours();
+            } else if (horario.includes(':')) {
+                hora = parseInt(horario.split(':')[0], 10);
+            }
+        }
+        
+        // If scheduled time is around 18:00, it's likely Theory
+        if (hora === 18) {
+            return 'Teoria';
+        }
+    }
+    
+    // Default to Practice if we can't determine
+    return 'Prática';
 }
 
 function buildCategoryCharts(categoryId, data) {
@@ -1468,6 +1711,151 @@ function buildCategoryCharts(categoryId, data) {
         
         if (Object.keys(statusCount).length > 0) {
             createPieChart('Distribuição por Status', 'Status das solicitações', 'solDocStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
+        }
+    }
+    
+    // EscalaTeoria - Theory Schedule Analysis
+    if (categoryId === 'EscalaTeoria') {
+        const alunoCount = {};
+        const diaCount = {};
+        const presencaCount = { 'Escalado': 0 };
+        
+        data.forEach(item => {
+            // Count students
+            const aluno = item['Aluno'] || item['Nome'] || 'Sem Nome';
+            alunoCount[aluno] = (alunoCount[aluno] || 0) + 1;
+            
+            // Count by day
+            const dia = item['Dia'] || item['DiaSemana'] || 'Sem Dia';
+            diaCount[dia] = (diaCount[dia] || 0) + 1;
+            
+            // In theory, all students are scheduled regardless of F in scale
+            presencaCount['Escalado'] = presencaCount['Escalado'] + 1;
+        });
+        
+        if (Object.keys(diaCount).length > 0) {
+            createPieChart('Distribuição por Dia da Semana', 'Aulas de Teoria por dia', 'escalaTeoriaDiaPie', Object.keys(diaCount), Object.values(diaCount), 'auto');
+        }
+        
+        if (Object.keys(alunoCount).length > 0) {
+            const topAlunos = Object.entries(alunoCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            createBarChart('Top 10 Alunos', 'Alunos com mais aulas de Teoria', 'escalaTeoriaAlunoBar', topAlunos.map(a => a[0]), topAlunos.map(a => a[1]), true);
+        }
+    }
+    
+    // EscalaPratica - Practice Schedule Analysis
+    if (categoryId === 'EscalaPratica') {
+        const alunoCount = {};
+        const diaCount = {};
+        const statusCount = { 'Escalado': 0, 'Folga (F)': 0 };
+        
+        data.forEach(item => {
+            // Count students
+            const aluno = item['Aluno'] || item['Nome'] || 'Sem Nome';
+            alunoCount[aluno] = (alunoCount[aluno] || 0) + 1;
+            
+            // Count by day
+            const dia = item['Dia'] || item['DiaSemana'] || 'Sem Dia';
+            diaCount[dia] = (diaCount[dia] || 0) + 1;
+            
+            // In practice, F means day off
+            const escala = (item['Escala'] || item['Status'] || '').toString().toUpperCase();
+            if (escala === 'F' || escala === 'FOLGA') {
+                statusCount['Folga (F)'] = statusCount['Folga (F)'] + 1;
+            } else {
+                statusCount['Escalado'] = statusCount['Escalado'] + 1;
+            }
+        });
+        
+        createPieChart('Status da Escala', 'Escalados vs Folga', 'escalaPraticaStatusPie', Object.keys(statusCount), Object.values(statusCount), 'auto');
+        
+        if (Object.keys(diaCount).length > 0) {
+            createPieChart('Distribuição por Dia da Semana', 'Aulas de Prática por dia', 'escalaPraticaDiaPie', Object.keys(diaCount), Object.values(diaCount), 'auto');
+        }
+        
+        if (Object.keys(alunoCount).length > 0) {
+            const topAlunos = Object.entries(alunoCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            createBarChart('Top 10 Alunos', 'Alunos com mais aulas de Prática', 'escalaPraticaAlunoBar', topAlunos.map(a => a[0]), topAlunos.map(a => a[1]), true);
+        }
+    }
+    
+    // RegistroPonto - Attendance Records Analysis with Theory/Practice separation
+    if (categoryId === 'RegistroPonto') {
+        const tipoAulaCount = { 'Teoria': 0, 'Prática': 0 };
+        const statusTeoriaCount = { 'No Horário': 0, 'Atraso': 0, 'Falta': 0 };
+        const statusPraticaCount = { 'No Horário': 0, 'Atraso': 0, 'Falta': 0 };
+        const alunoCount = {};
+        const diaCount = {};
+        
+        // Theory fixed time: 18:00, late threshold: 18:10
+        const TEORIA_HORA_LIMITE = 18;
+        const TEORIA_MINUTO_LIMITE = 10;
+        
+        data.forEach(item => {
+            const tipoAula = (item['TipoAula'] || item['Tipo'] || 'Teoria').toString();
+            const aluno = item['Aluno'] || item['Nome'] || 'Sem Nome';
+            const horario = item['HorarioEntrada'] || item['Horario'] || '';
+            const dia = item['Dia'] || item['Data'] || 'Sem Data';
+            const presente = item['Presente'] !== false && item['Presente'] !== 'N' && item['Presente'] !== 'Não';
+            
+            // Count by type
+            if (tipoAula.toLowerCase().includes('teoria') || tipoAula.toLowerCase().includes('theory')) {
+                tipoAulaCount['Teoria']++;
+                
+                // Check if late for theory class (after 18:10)
+                if (presente && horario) {
+                    const isLate = checkIfLateForTeoria(horario, TEORIA_HORA_LIMITE, TEORIA_MINUTO_LIMITE);
+                    if (isLate) {
+                        statusTeoriaCount['Atraso']++;
+                    } else {
+                        statusTeoriaCount['No Horário']++;
+                    }
+                } else if (!presente) {
+                    statusTeoriaCount['Falta']++;
+                }
+            } else {
+                tipoAulaCount['Prática']++;
+                
+                // For practice, use the scheduled time from scale
+                const horaEscalada = item['HorarioEscala'] || item['HorarioInicio'] || '';
+                if (presente && horario && horaEscalada) {
+                    const isLate = checkIfLateForPratica(horario, horaEscalada);
+                    if (isLate) {
+                        statusPraticaCount['Atraso']++;
+                    } else {
+                        statusPraticaCount['No Horário']++;
+                    }
+                } else if (!presente) {
+                    statusPraticaCount['Falta']++;
+                } else {
+                    statusPraticaCount['No Horário']++;
+                }
+            }
+            
+            // Count by student
+            alunoCount[aluno] = (alunoCount[aluno] || 0) + 1;
+            
+            // Count by day
+            diaCount[dia] = (diaCount[dia] || 0) + 1;
+        });
+        
+        // Chart 1: Distribution by type (Theory vs Practice)
+        createPieChart('Registros por Tipo de Aula', 'Teoria vs Prática', 'registroPontoTipoPie', Object.keys(tipoAulaCount), Object.values(tipoAulaCount), 'auto');
+        
+        // Chart 2: Theory attendance status
+        if (tipoAulaCount['Teoria'] > 0) {
+            createPieChart('Status Teoria', 'Pontualidade nas aulas de Teoria (início: 18h, tolerância até 18:10)', 'registroPontoTeoriaStatusPie', Object.keys(statusTeoriaCount), Object.values(statusTeoriaCount), 'auto');
+        }
+        
+        // Chart 3: Practice attendance status
+        if (tipoAulaCount['Prática'] > 0) {
+            createPieChart('Status Prática', 'Pontualidade nas aulas de Prática', 'registroPontoPraticaStatusPie', Object.keys(statusPraticaCount), Object.values(statusPraticaCount), 'auto');
+        }
+        
+        // Chart 4: Top students
+        if (Object.keys(alunoCount).length > 0) {
+            const topAlunos = Object.entries(alunoCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            createBarChart('Top 10 Alunos', 'Alunos com mais registros', 'registroPontoAlunoBar', topAlunos.map(a => a[0]), topAlunos.map(a => a[1]), true);
         }
     }
 }
