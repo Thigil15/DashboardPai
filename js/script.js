@@ -308,7 +308,7 @@ function createLegendLabels(labels, colors) {
     return labelsHTML;
 }
 
-// Get horizontal bar chart options (for charts with many items)
+// Get horizontal bar chart options (for charts with many items) - displays percentages
 function getHorizontalBarChartOptions() {
     return {
         indexAxis: 'y',
@@ -321,7 +321,9 @@ function getHorizontalBarChartOptions() {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        return `${context.label}: ${context.raw}`;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                        return `${context.label}: ${percentage}% (${context.raw})`;
                     }
                 }
             },
@@ -329,10 +331,12 @@ function getHorizontalBarChartOptions() {
                 color: '#fff',
                 font: {
                     weight: 'bold',
-                    size: 12
+                    size: 11
                 },
-                formatter: (value) => {
-                    return Math.round(value);
+                formatter: (value, context) => {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${percentage}%`;
                 },
                 anchor: 'end',
                 align: 'start',
@@ -349,6 +353,10 @@ function getHorizontalBarChartOptions() {
                 ticks: {
                     font: {
                         size: 11
+                    },
+                    callback: function(value) {
+                        // Hide raw values on axis, chart will display percentages on bars
+                        return '';
                     }
                 }
             },
@@ -366,7 +374,7 @@ function getHorizontalBarChartOptions() {
     };
 }
 
-// Get vertical bar chart options (for medium-sized charts)
+// Get vertical bar chart options (for medium-sized charts) - displays percentages
 function getBarChartOptions() {
     return {
         responsive: true,
@@ -383,7 +391,9 @@ function getBarChartOptions() {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        return `${context.label}: ${context.raw}`;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                        return `${context.label}: ${percentage}% (${context.raw})`;
                     }
                 }
             },
@@ -391,10 +401,12 @@ function getBarChartOptions() {
                 color: '#334155',
                 font: {
                     weight: 'bold',
-                    size: 11
+                    size: 10
                 },
-                formatter: (value) => {
-                    return Math.round(value);
+                formatter: (value, context) => {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${percentage}%`;
                 },
                 anchor: 'end',
                 align: 'top',
@@ -422,6 +434,10 @@ function getBarChartOptions() {
                 ticks: {
                     font: {
                         size: 11
+                    },
+                    callback: function(value) {
+                        // Hide raw values on axis, chart will display percentages on bars
+                        return '';
                     }
                 }
             }
